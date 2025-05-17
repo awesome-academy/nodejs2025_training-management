@@ -10,7 +10,6 @@ export class VerifyService {
     ) {}
 
     async addVerifyJob(data: any) {
-        console.log(data);
         await this.jobQueue.add('verify-email', data);
     }
 }

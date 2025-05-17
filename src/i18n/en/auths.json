@@ -4,5 +4,7 @@
     "Please using correct platform": "Please using correct platform",
     "Email or Password is not correct": "Email or Password is not correct",
     "Email is not exists": "Email is not exists",
-    "Unauthorized": "You just don't have permission to"
+    "Unauthorized": "You just don't have permission to",
+    "An error occurred while sending the verification code": "An error occurred while sending the verification code",
+    "Invalid code": "Invalid code"
 }
