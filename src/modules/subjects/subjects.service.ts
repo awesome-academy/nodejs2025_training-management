@@ -46,7 +46,9 @@ export class SubjectService extends BaseServiceAbstract<Subject> {
 
     async createSubject(dto: CreateSubjectDto, user: User): Promise<AppResponse<Subject>> {
         const { name, description, tasks } = dto;
-        const subject = await this.subjectRepository.findOneByCondition({ name: name });
+        const subject = await this.subjectRepository.findOneByCondition({
+            name: name,
+        });
         if (subject) {
             throw new UnprocessableEntityException('subjects.This subject had exsisted');
         }
@@ -63,11 +65,14 @@ export class SubjectService extends BaseServiceAbstract<Subject> {
     }
 
     async updateSubjectInfo(subjectId: string, dto: UpdateSubjectDto): Promise<AppResponse<UpdateResult>> {
-        if (this._checkSubjectIsStudyByTrainee(subjectId)) {
+        const checkSubjectIsStudyByTrainee = await this._checkSubjectIsStudyByTrainee(subjectId);
+        if (checkSubjectIsStudyByTrainee) {
             throw new UnprocessableEntityException('subjects.Can not adujst this subject');
         }
         const { name } = dto;
-        const subject = await this.subjectRepository.findOneByCondition({ name: name });
+        const subject = await this.subjectRepository.findOneByCondition({
+            name: name,
+        });
         if (subject) {
             throw new UnprocessableEntityException('subjects.This subject had exsisted');
         }
@@ -78,14 +83,16 @@ export class SubjectService extends BaseServiceAbstract<Subject> {
 
     async addTaskForSubject(subjectId: string, dto: UpdateSubjectTask): Promise<AppResponse<Task[]>> {
         const { tasks } = dto;
-        if (this._checkSubjectIsStudyByTrainee(subjectId)) {
+        const checkSubjectIsStudyByTrainee = await this._checkSubjectIsStudyByTrainee(subjectId);
+        if (checkSubjectIsStudyByTrainee) {
             throw new UnprocessableEntityException('subjects.Can not adujst this subject');
         }
         return await this._addTaskForSubject(tasks, subjectId);
     }
 
     async _addTaskForSubject(tasks: TaskDto[], subjectId: string): Promise<AppResponse<Task[]>> {
-        if (this._checkSubjectIsStudyByTrainee(subjectId)) {
+        const checkSubjectIsStudyByTrainee = await this._checkSubjectIsStudyByTrainee(subjectId);
+        if (checkSubjectIsStudyByTrainee) {
             throw new UnprocessableEntityException('subjects.Can not adujst this subject');
         }
         if (tasks.length === 0) {

@@ -8,6 +8,7 @@ import {
     SaveOptions,
     UpdateResult,
     DeleteResult,
+    SelectQueryBuilder,
 } from 'typeorm';
 import { BaseEntity } from '@modules/shared/base/base.entity';
 import { FindAllResponse } from 'src/types/common.type';
@@ -92,5 +93,9 @@ export abstract class BaseRepositoryAbstract<T extends BaseEntity> implements Ba
         const queryRunner = this.dataSource.createQueryRunner();
         await queryRunner.startTransaction();
         return queryRunner;
+    }
+
+    createQueryBuilder(alias: string): SelectQueryBuilder<T> {
+        return this.repository.createQueryBuilder(alias);
     }
 }
