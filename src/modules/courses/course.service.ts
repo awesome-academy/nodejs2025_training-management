@@ -21,10 +21,15 @@ import { DeleteSubjectCourseDto } from './dto/deleteSubject.dto';
 import { EmailDto } from 'src/common/dto/email.dto';
 import { UsersService } from '@modules/users/user.services';
 import { ERolesUser } from '@modules/users/enums/index.enum';
-import { AppResponse } from 'src/types/common.type';
 import { SupervisorCourse } from '@modules/supervisor_course/entity/supervisor_course.entity';
 import { getLimitAndSkipHelper } from 'src/helper/pagination.helper';
+import { UserCourseService } from '@modules/user_course/user_course.service';
+import { AppResponse } from 'src/types/common.type';
+import { UserCourse } from '@modules/user_course/entity/user_course.entity';
+import { UserSubjectService } from '@modules/user_subject/user_subject.service';
+import { UserTaskService } from '@modules/user_task/user_task.service';
 import { FindCourseDto } from './dto/findCourse.dto';
+import { TraineeDto, UpdateStatusTraineeDto } from './dto/trainee.dto';
 
 @Injectable()
 export class CourseService extends BaseServiceAbstract<Course> {
@@ -35,6 +40,9 @@ export class CourseService extends BaseServiceAbstract<Course> {
         private readonly supervisorCourseService: SupervisorCourseService,
         private readonly courseSubjectService: CourseSubjectService,
         private readonly userService: UsersService,
+        private readonly userCourseService: UserCourseService,
+        private readonly userSubjectService: UserSubjectService,
+        private readonly userTaskService: UserTaskService,
     ) {
         super(courseRepository);
     }
@@ -59,6 +67,97 @@ export class CourseService extends BaseServiceAbstract<Course> {
         });
         return {
             data: newCourse,
+        };
+    }
+
+    async addTraineeForCourse(dto: TraineeDto, user: User): Promise<AppResponse<UserCourse>> {
+        const { email, courseId } = dto;
+        console.log(email, courseId);
+        await this._checkUserIsSupervisorOfCourse(courseId, user);
+        const trainee = await this.userService.findByEmail(email);
+        if (!trainee) {
+            throw new NotFoundException('courses.Trainee not found');
+        }
+        const courseDetail = await this._getCourseDetail(courseId);
+        const courseSubjectsDetail = await this._getSubjectsAndTaskListFromCourseDetail(courseDetail);
+        for (let i = 0; i < courseSubjectsDetail.length; i++) {
+            const courseSubject = courseSubjectsDetail[0];
+            const userSubject = await this.userSubjectService.addTraineeForUserSubject(
+                courseSubject.courseSubjectId,
+                trainee,
+            );
+            await this.userTaskService.handleCreateUserTask(userSubject, courseSubject.tasks);
+        }
+        const userCourse = await this.userCourseService.handleAddTraineeForCouse(trainee, courseId);
+        return {
+            data: userCourse,
+        };
+    }
+
+    async deleteTraineeForCourse(userCourseId: string, user: User): Promise<AppResponse<boolean>> {
+        const userCourse = await this.userCourseService.findOneByCondition(
+            { id: userCourseId },
+            { relations: ['course', 'user'] },
+        );
+
+        if (!userCourse) {
+            throw new NotFoundException('courses.UserCourse not found');
+        }
+
+        await this._checkUserIsSupervisorOfCourse(userCourse.course.id, user);
+
+        try {
+            const courseSubjects = (
+                await this.courseSubjectService.findAll({
+                    course: { id: userCourse.course.id },
+                })
+            ).items;
+
+            for (const courseSubject of courseSubjects) {
+                const userSubjects = (
+                    await this.userSubjectService.findAll({
+                        courseSubject: { id: courseSubject.id },
+                        user: { id: userCourse.user.id }, // lọc theo trainee
+                    })
+                ).items;
+
+                for (const userSubject of userSubjects) {
+                    const userTasks = (
+                        await this.userTaskService.findAll({
+                            userSubject: { id: userSubject.id },
+                        })
+                    ).items;
+
+                    const userTaskIds = userTasks.map((task) => task.id);
+                    if (userTaskIds.length > 0) {
+                        await this.userTaskService.removeMany(userTaskIds);
+                    }
+
+                    await this.userSubjectService.remove(userSubject.id);
+                }
+            }
+
+            await this.userCourseService.remove(userCourseId);
+
+            return { data: true };
+        } catch (error) {
+            console.error(error);
+            throw new UnprocessableEntityException('courses.Remove trainee failed');
+        }
+    }
+
+    async updateTraineeStatus(
+        userCourseId: string,
+        user: User,
+        dto: UpdateStatusTraineeDto,
+    ): Promise<AppResponse<UserCourse>> {
+        const userCourse = await this.userCourseService.findOneByCondition(
+            { id: userCourseId },
+            { relations: ['course'] },
+        );
+        await this._checkUserIsSupervisorOfCourse(userCourse.course.id, user);
+        return {
+            data: await this.userCourseService.update(userCourseId, dto),
         };
     }
 
@@ -102,6 +201,21 @@ export class CourseService extends BaseServiceAbstract<Course> {
         }
 
         return course;
+    }
+
+    async _getSubjectsAndTaskListFromCourseDetail(courseDetail: Course) {
+        const courseSubjects: CourseSubject[] = courseDetail.courseSubjects;
+        return courseSubjects.map((courseSubject) => {
+            const subject = courseSubject.subject;
+
+            return {
+                courseSubjectId: courseSubject.id,
+                subjectId: subject.id,
+                subjectName: subject.name,
+                description: subject.description,
+                tasks: subject.tasksCreated,
+            };
+        });
     }
 
     async getCourseDetailForSupervisor(courseId: string, user: User): Promise<Course> {
@@ -188,8 +302,21 @@ export class CourseService extends BaseServiceAbstract<Course> {
             throw new NotFoundException('course.Course not found');
         }
         if (user.id !== course.creator.id) {
-            throw new ForbiddenException('Unauthorized');
+            throw new ForbiddenException('Forbidden Resource');
         }
+    }
+
+    async _checkUserIsSupervisorOfCourse(courseId: string, user: User): Promise<boolean> {
+        console.log(user, courseId, 'Hihihi');
+        const supervisorCourse = await this.supervisorCourseService.findOneByCondition({
+            course: { id: courseId },
+            user: { id: user.id },
+        });
+        console.log(supervisorCourse);
+        if (!supervisorCourse) {
+            return false;
+        }
+        return true;
     }
 
     async addSupervisor({ email }: EmailDto, courseId: string, user: User): Promise<AppResponse<SupervisorCourse>> {

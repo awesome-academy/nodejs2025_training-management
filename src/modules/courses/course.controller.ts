@@ -19,6 +19,8 @@ import { RolesGuard } from '@modules/auth/guards/roles.guard';
 import { SessionAuthGuard } from '@modules/auth/guards/session.guard';
 import { ERolesUser } from '@modules/users/enums/index.enum';
 import { Roles } from 'src/decorators/roles.decorator';
+import { TraineeDto, UpdateStatusTraineeDto } from './dto/trainee.dto';
+import { UserCourse } from '@modules/user_course/entity/user_course.entity';
 
 @Controller('courses')
 @ApiTags('courses')
@@ -26,9 +28,7 @@ import { Roles } from 'src/decorators/roles.decorator';
 export class CourseController {
     constructor(private readonly courseService: CourseService) {}
 
-    @Roles(ERolesUser.SUPERVISOR)
-    @UseGuards(SessionAuthGuard, RolesGuard)
-    @Get('supervisor')
+    @Get('supervisor/list')
     async getCourseBySupervisor(
         @Query() dto: FindCourseDto,
         @CurrentUserDecorator() user: User,
@@ -38,11 +38,9 @@ export class CourseController {
         };
     }
 
-    @Roles(ERolesUser.SUPERVISOR)
-    @UseGuards(SessionAuthGuard, RolesGuard)
-    @Get('supervisor/:courseId')
+    @Get('supervisor/detail')
     async getCourseDetailBySupervisor(
-        @Param('courseId') courseId: string,
+        @Query('courseId') courseId: string,
         @CurrentUserDecorator() user: User,
     ): Promise<AppResponse<Course>> {
         return {
@@ -50,26 +48,71 @@ export class CourseController {
         };
     }
 
+    @Roles(ERolesUser.SUPERVISOR)
+    @UseGuards(SessionAuthGuard, RolesGuard)
+    @Post('supervisor/trainee')
+    async addTrainee(@Body() dto: TraineeDto, @CurrentUserDecorator() user: User): Promise<AppResponse<UserCourse>> {
+        return await this.courseService.addTraineeForCourse(dto, user);
+    }
+
+    @Roles(ERolesUser.SUPERVISOR)
+    @UseGuards(SessionAuthGuard, RolesGuard)
+    @Patch('supervisor/trainee/:userCourseId')
+    async updateTrainee(
+        @Param('userCourseId') userCourseId: string,
+        @CurrentUserDecorator() user: User,
+        @Body() dto: UpdateStatusTraineeDto,
+    ): Promise<AppResponse<UserCourse>> {
+        return await this.courseService.updateTraineeStatus(userCourseId, user, dto);
+    }
+
+    @Roles(ERolesUser.SUPERVISOR)
+    @UseGuards(SessionAuthGuard, RolesGuard)
+    @Delete('supervisor/trainee/:userCourseId')
+    async removeTrainee(
+        @Param('userCourseId') userCourseId: string,
+        @CurrentUserDecorator() user: User,
+    ): Promise<AppResponse<boolean>> {
+        return await this.courseService.deleteTraineeForCourse(userCourseId, user);
+    }
+
+    @Roles(ERolesUser.TRAINEE)
+    @UseGuards(SessionAuthGuard, RolesGuard)
+    @Get('trainee/list')
+    async getCourseByTrainee(
+        @Query() dto: FindCourseDto,
+        @CurrentUserDecorator() user: User,
+    ): Promise<AppResponse<Course[]>> {
+        return await this.courseService.getCourseForTrainee(dto, user);
+    }
+
+    @Roles(ERolesUser.TRAINEE)
+    @UseGuards(SessionAuthGuard, RolesGuard)
+    @Get('trainee/detail')
+    async getCourseDetailByTrainee(
+        @Query('courseId') courseId: string,
+        @CurrentUserDecorator() user: User,
+    ): Promise<AppResponse<Course>> {
+        return await this.courseService.getCourseDetailForTrainee(courseId, user);
+    }
+
     @Post()
     async createCourse(@Body() dto: CreateCourseDto, @CurrentUserDecorator() user: User): Promise<AppResponse<Course>> {
         return await this.courseService.createNewCourse(dto, user);
     }
 
-    @Roles(ERolesUser.SUPERVISOR)
-    @UseGuards(SessionAuthGuard, RolesGuard)
     @Patch('subject/:id')
-    async updateSubjectCourse(
+    async updateCourse(
         @Body() dto: UpdateSubjectForCourseDto,
         @CurrentUserDecorator() user: User,
         @Param('id') id: string,
     ): Promise<AppResponse<CourseSubject[]>> {
-        return await this.courseService.addSubjectForCourse(dto, user, id);
+        console.log(dto, user, id);
+        return await this.courseService.updateSubjectForCourse(dto, user, id);
     }
 
-    @Roles(ERolesUser.SUPERVISOR)
-    @UseGuards(SessionAuthGuard, RolesGuard)
     @Patch('info/:id')
-    async updateCourse(
+    async updateSubjectCourse(
         @Body() dto: UpdateCourseDto,
         @CurrentUserDecorator() user: User,
         @Param('id') id: string,
@@ -77,8 +120,6 @@ export class CourseController {
         return await this.courseService.updateCourseInfo(dto, user, id);
     }
 
-    @Roles(ERolesUser.SUPERVISOR)
-    @UseGuards(SessionAuthGuard, RolesGuard)
     @Patch('supervisor/:id')
     async addNewSupervisor(
         @Body() dto: EmailDto,
@@ -88,8 +129,14 @@ export class CourseController {
         return await this.courseService.addSupervisor(dto, id, user);
     }
 
-    @Roles(ERolesUser.SUPERVISOR)
-    @UseGuards(SessionAuthGuard, RolesGuard)
+    @Delete(':id')
+    async deleteOneCourse(
+        @Param('id') id: string,
+        @CurrentUserDecorator() user: User,
+    ): Promise<AppResponse<UpdateResult>> {
+        return await this.courseService.deleteCourse(id, user);
+    }
+
     @Delete('sub/:id')
     async deleteSubjectCourse(
         @Param('id') id: string,
@@ -97,15 +144,5 @@ export class CourseController {
         @CurrentUserDecorator() user: User,
     ): Promise<AppResponse<UpdateResult>> {
         return await this.courseService.deleteSubjectForCourse(id, dto, user);
-    }
-
-    @Roles(ERolesUser.SUPERVISOR)
-    @UseGuards(SessionAuthGuard, RolesGuard)
-    @Delete(':id')
-    async deleteOneCourse(
-        @Param('id') id: string,
-        @CurrentUserDecorator() user: User,
-    ): Promise<AppResponse<UpdateResult>> {
-        return await this.courseService.deleteCourse(id, user);
     }
 }
