@@ -182,7 +182,7 @@ export class CourseService extends BaseServiceAbstract<Course> {
     }
 
     async getCourseDetailForTrainee(courseId: string, user: User): Promise<AppResponse<Course>> {
-        const course = await this.courseRepository.findOneById(courseId) 
+        const course = await this.courseRepository.findOneById(courseId);
         if (!course) {
             throw new NotFoundException('courses.Course not found');
         }
