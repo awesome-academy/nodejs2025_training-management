@@ -1,0 +1,199 @@
+extends layout
+
+block content
+  // Hero Section
+  section.hero-section.py-5
+    .hero-overlay
+    .container.position-relative
+      .row.align-items-center
+        .col-lg-8.mx-auto.text-center(data-aos="fade-up")
+          h1.display-4.fw-bold.mb-4.text-white Chào mừng đến với Hệ thống Đào tạo
+          p.lead.mb-4.text-white Nền tảng quản lý và đào tạo chuyên nghiệp, giúp bạn dễ dàng theo dõi và nâng cao chất lượng đào tạo.
+          .d-flex.gap-3.justify-content-center
+            a.btn.btn-primary.btn-lg(href="/views/supervisor/courses", data-aos="fade-up", data-aos-delay="200")
+              i.fas.fa-graduation-cap.me-2
+              | Xem khóa học
+            a.btn.btn-outline-light.btn-lg(href="/views/supervisor/subjects", data-aos="fade-up", data-aos-delay="300")
+              i.fas.fa-book.me-2
+              | Xem môn học
+
+  // Features Section
+  section.features-section.py-5.bg-light
+    .container
+      h2.text-center.mb-5(data-aos="fade-up") Tính năng nổi bật
+      .row.g-4
+        .col-md-4(data-aos="fade-up", data-aos-delay="100")
+          .feature-card.p-4.bg-white.rounded-3.shadow-sm.h-100
+            .icon-wrapper.mb-4
+              i.fas.fa-chart-line.fa-2x.text-primary
+            h4.h5.mb-3 Theo dõi tiến độ
+            p.text-muted.mb-0 Theo dõi và đánh giá tiến độ học tập của học viên một cách trực quan và hiệu quả.
+        .col-md-4(data-aos="fade-up", data-aos-delay="200")
+          .feature-card.p-4.bg-white.rounded-3.shadow-sm.h-100
+            .icon-wrapper.mb-4
+              i.fas.fa-tasks.fa-2x.text-primary
+            h4.h5.mb-3 Quản lý bài tập
+            p.text-muted.mb-0 Phân phối và quản lý bài tập, đánh giá kết quả học tập một cách hệ thống.
+        .col-md-4(data-aos="fade-up", data-aos-delay="300")
+          .feature-card.p-4.bg-white.rounded-3.shadow-sm.h-100
+            .icon-wrapper.mb-4
+              i.fas.fa-users.fa-2x.text-primary
+            h4.h5.mb-3 Tương tác đa chiều
+            p.text-muted.mb-0 Tạo môi trường tương tác giữa giảng viên và học viên, thúc đẩy quá trình học tập.
+
+  // Statistics Section
+  section.stats-section.py-5
+    .container
+      .row.g-4
+        .col-md-3.col-6(data-aos="fade-up")
+          .stat-card.text-center.p-4
+            .stat-icon.mb-3
+              i.fas.fa-graduation-cap.fa-2x.text-primary
+            h3.stat-number.mb-2 100+
+            p.stat-label.text-muted.mb-0 Khóa học
+        .col-md-3.col-6(data-aos="fade-up", data-aos-delay="100")
+          .stat-card.text-center.p-4
+            .stat-icon.mb-3
+              i.fas.fa-book.fa-2x.text-primary
+            h3.stat-number.mb-2 500+
+            p.stat-label.text-muted.mb-0 Môn học
+        .col-md-3.col-6(data-aos="fade-up", data-aos-delay="200")
+          .stat-card.text-center.p-4
+            .stat-icon.mb-3
+              i.fas.fa-user-graduate.fa-2x.text-primary
+            h3.stat-number.mb-2 1000+
+            p.stat-label.text-muted.mb-0 Học viên
+        .col-md-3.col-6(data-aos="fade-up", data-aos-delay="300")
+          .stat-card.text-center.p-4
+            .stat-icon.mb-3
+              i.fas.fa-chalkboard-teacher.fa-2x.text-primary
+            h3.stat-number.mb-2 50+
+            p.stat-label.text-muted.mb-0 Giảng viên
+
+  // CTA Section
+  section.cta-section.py-5.bg-primary.text-white
+    .container
+      .row.align-items-center
+        .col-lg-8.mx-auto.text-center(data-aos="zoom-in")
+          h2.mb-4 Sẵn sàng bắt đầu?
+          p.lead.mb-4 Khám phá ngay các khóa học và môn học chất lượng của chúng tôi.
+          a.btn.btn-light.btn-lg(href="/views/supervisor/courses")
+            i.fas.fa-rocket.me-2
+            | Bắt đầu ngay
+
+  style.
+    .hero-section {
+      position: relative;
+      background: url('https://img.freepik.com/free-vector/teaching-concept-illustration_114360-2584.jpg') no-repeat center center;
+      background-size: cover;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 0;
+    }
+    
+    .hero-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(108, 92, 231, 0.9) 0%, rgba(82, 70, 195, 0.8) 100%);
+    }
+    
+    .hero-section .container {
+      z-index: 1;
+    }
+    
+    .feature-card {
+      transition: transform 0.3s ease;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .icon-wrapper {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(108, 92, 231, 0.1);
+    }
+    
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #6c5ce7;
+    }
+    
+    .cta-section {
+      background: linear-gradient(135deg, #6c5ce7 0%, #5246c3 100%);
+    }
+    
+    .btn {
+      padding: 0.8rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #6c5ce7 0%, #5246c3 100%);
+      border: none;
+    }
+    
+    .btn-outline-light {
+      border: 2px solid white;
+      color: white;
+    }
+    
+    .btn-outline-light:hover {
+      background: white;
+      color: #6c5ce7;
+    }
+    
+    [data-aos] {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.6s ease;
+    }
+    
+    [data-aos].aos-animate {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    @keyframes float {
+      0% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+      100% {
+        transform: translateY(0px);
+      }
+    }
+    
+    .floating {
+      animation: float 3s ease-in-out infinite;
+    }

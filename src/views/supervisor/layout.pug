@@ -1,0 +1,302 @@
+doctype html
+html(lang="vi")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title Hệ thống Quản lý Đào tạo
+    link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css")
+    link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css")
+    link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css")
+    style.
+      :root {
+        --primary-color: #6c5ce7;
+        --secondary-color: #a29bfe;
+        --accent-color: #74b9ff;
+        --text-color: #2d3436;
+        --light-bg: #f5f6fa;
+        --gradient-primary: linear-gradient(135deg, #6c5ce7, #a29bfe);
+        --gradient-secondary: linear-gradient(135deg, #74b9ff, #0984e3);
+      }
+
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: var(--light-bg);
+        color: var(--text-color);
+      }
+
+      .navbar {
+        background: var(--gradient-primary);
+        box-shadow: 0 2px 15px rgba(108, 92, 231, 0.2);
+        padding: 1rem 2rem;
+      }
+
+      .navbar-brand {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: white !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .nav-link {
+        color: rgba(255,255,255,0.9) !important;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .nav-link:hover {
+        color: white !important;
+        transform: translateY(-2px);
+      }
+
+      .nav-link::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 0;
+        height: 2px;
+        background: white;
+        transition: all 0.3s ease;
+        transform: translateX(-50%);
+      }
+
+      .nav-link:hover::after {
+        width: 100%;
+      }
+
+      .dropdown-menu {
+        border: none;
+        box-shadow: 0 5px 15px rgba(108, 92, 231, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
+        animation: dropdownFade 0.3s ease;
+      }
+
+      @keyframes dropdownFade {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .dropdown-item {
+        padding: 0.8rem 1.5rem;
+        transition: all 0.3s ease;
+      }
+
+      .dropdown-item:hover {
+        background: var(--accent-color);
+        color: white;
+        transform: translateX(5px);
+      }
+
+      .main-content {
+        padding: 2rem;
+        min-height: calc(100vh - 76px);
+      }
+
+      .card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(108, 92, 231, 0.05);
+        transition: all 0.3s ease;
+        overflow: hidden;
+      }
+
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(108, 92, 231, 0.1);
+      }
+
+      .btn {
+        border-radius: 8px;
+        padding: 0.8rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .btn-primary {
+        background: var(--gradient-primary);
+        border: none;
+      }
+
+      .btn-primary:hover {
+        background: var(--gradient-secondary);
+        transform: translateY(-2px);
+      }
+
+      .table {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(108, 92, 231, 0.05);
+      }
+
+      .table thead th {
+        background: var(--gradient-primary);
+        color: white;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 500;
+      }
+
+      .stats-card {
+        background: var(--gradient-primary);
+        color: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+      }
+
+      .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(108, 92, 231, 0.2);
+      }
+
+      .stats-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        opacity: 0.8;
+      }
+
+      .stats-number {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+
+      .stats-label {
+        font-size: 1rem;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.9);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .loading-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid var(--light-bg);
+        border-top-color: var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .btn-outline-primary {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+
+      .btn-outline-primary:hover {
+        background: var(--gradient-primary);
+        border-color: transparent;
+      }
+
+      .btn-outline-success {
+        color: var(--accent-color);
+        border-color: var(--accent-color);
+      }
+
+      .btn-outline-success:hover {
+        background: var(--gradient-secondary);
+        border-color: transparent;
+      }
+
+      .text-primary {
+        color: var(--primary-color) !important;
+      }
+
+      .text-muted {
+        color: var(--secondary-color) !important;
+      }
+
+  body
+    .loading-overlay
+      .loading-spinner
+
+    nav.navbar.navbar-expand-lg.navbar-dark
+      .container-fluid
+        a.navbar-brand(href="views/supervisor")
+          i.fas.fa-graduation-cap.me-2
+          | Hệ thống Đào tạo
+        button.navbar-toggler(type="button", data-bs-toggle="collapse", data-bs-target="#navbarNav")
+          span.navbar-toggler-icon
+        #navbarNav.collapse.navbar-collapse
+          ul.navbar-nav.me-auto
+            li.nav-item
+              a.nav-link(href="/views/supervisor/courses")
+                i.fas.fa-book.me-2
+                | Khóa học
+            li.nav-item
+              a.nav-link(href="/views/supervisor/subjects")
+                i.fas.fa-tasks.me-2
+                | Môn học
+          ul.navbar-nav
+            li.nav-item.dropdown
+              a.nav-link.dropdown-toggle(href="#", data-bs-toggle="dropdown")
+                i.fas.fa-user-circle.me-2
+                | Tài khoản
+              ul.dropdown-menu.dropdown-menu-end
+                li
+                  a.dropdown-item(href="/views/supervisor/profile")
+                    i.fas.fa-user.me-2
+                    | Hồ sơ
+                li
+                  a.dropdown-item(href="/views/supervisor/settings")
+                    i.fas.fa-cog.me-2
+                    | Cài đặt
+                li
+                  hr.dropdown-divider
+                li
+                  a.dropdown-item(href="/views/supervisor/logout")
+                    i.fas.fa-sign-out-alt.me-2
+                    | Đăng xuất
+
+    .main-content
+      block content
+
+    script(src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js")
+    script(src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js")
+    script(src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js")
+    script(src="/js/supervisor/layout.js" defer)
+    block scripts

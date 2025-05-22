@@ -91,7 +91,6 @@ export class CourseService extends BaseServiceAbstract<Course> {
             };
         } catch (error) {
             await transaction.rollbackTransaction();
-            console.log(error);
             throw new UnprocessableEntityException('courses.Error happens when creating new course');
         } finally {
             await transaction.release();

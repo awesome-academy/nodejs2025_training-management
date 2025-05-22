@@ -1,5 +1,11 @@
 import { UsersService } from '@modules/users/user.services';
-import { Injectable, NotFoundException, UnauthorizedException, UnprocessableEntityException } from '@nestjs/common';
+import {
+    Injectable,
+    NotFoundException,
+    Req,
+    UnauthorizedException,
+    UnprocessableEntityException,
+} from '@nestjs/common';
 import { SignInDto, SignUpDto } from './dto/auth.dto';
 import * as argon2 from 'argon2';
 import { User } from '@modules/users/entity/user.entity';
@@ -139,5 +145,11 @@ export class AuthService {
         } catch (err) {
             return false;
         }
+    }
+
+    async checkLoginStatus(@Req() req: RequestWithUser): Promise<AppResponse<boolean>> {
+        return {
+            data: req.user ? true : false,
+        };
     }
 }

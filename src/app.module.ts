@@ -21,6 +21,7 @@ import { SupervisorCourseModule } from '@modules/supervisor_course/supervisor_co
 import { CourseSubjectModule } from '@modules/course_subject/course_subject.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { PassportModule } from '@nestjs/passport';
+import { PageController } from './controllers/page.controller';
 import { RedisCacheModule } from '@modules/cache/cache.module';
 // import { AuthModule } from './auth/auth.module';
 
@@ -75,7 +76,7 @@ import { RedisCacheModule } from '@modules/cache/cache.module';
         AuthModule,
         RedisCacheModule,
     ],
-    controllers: [AppController],
+    controllers: [AppController, PageController],
     providers: [
         AppService,
         AppService,

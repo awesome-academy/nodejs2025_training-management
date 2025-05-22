@@ -1,0 +1,121 @@
+extends layout
+
+block content
+  .container
+    .row.justify-content-center.align-items-center.min-vh-100
+      .col-md-6.col-lg-4
+        .card.shadow-sm
+          .card-body.p-5
+            .text-center.mb-4
+              i.fas.fa-shield-alt.fa-3x.text-primary.mb-3
+              h4.text-dark.mb-2 Xác thực tài khoản
+              p.text-muted.mb-0
+                | Mã xác thực đã được gửi đến email 
+                span#userEmail.text-primary.fw-bold
+                | . Vui lòng nhập mã để tiếp tục.
+
+            form#verifyForm.mt-4
+              .mb-4
+                .d-flex.justify-content-center.gap-2
+                  - for (let i = 1; i <= 6; i++)
+                    input.form-control.text-center.verification-input(
+                      type="text"
+                      maxlength="1"
+                      pattern="[0-9]"
+                      inputmode="numeric"
+                      required
+                      style="width: 50px; height: 50px; font-size: 1.5rem;"
+                    )
+
+              .d-grid.gap-2
+                button.btn.btn-primary.btn-lg(type="submit", form="verifyForm")
+                  i.fas.fa-check-circle.me-2
+                  | Xác thực
+
+              .text-center.mt-4
+                p.text-muted.mb-2 Chưa nhận được mã?
+                button.btn.btn-link.text-primary#resendCode(type="button")
+                  i.fas.fa-redo.me-1
+                  | Gửi lại mã
+
+  #notificationsContainer.notifications-container
+
+  style.
+    .verification-input {
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+    
+    .verification-input:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .verification-input:invalid {
+      border-color: #dc3545;
+    }
+    
+    .verification-input:valid {
+      border-color: #198754;
+    }
+
+    .notifications-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1000;
+    }
+
+    .notification {
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      min-width: 300px;
+    }
+
+    .notification.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .notification.success {
+      background: #48bb78;
+      color: white;
+    }
+
+    .notification.error {
+      background: #f56565;
+      color: white;
+    }
+
+    .notification-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .notification-message {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    @keyframes slideOut {
+      from {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateX(100%);
+      }
+    }
+
+block scripts
+  script(src="/js/supervisor/verify.js" defer)
