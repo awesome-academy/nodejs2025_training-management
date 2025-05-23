@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CreateCourseDto } from './dto/createCourse.dto';
 import { AppResponse } from 'src/types/common.type';
@@ -13,18 +13,43 @@ import { CourseSubject } from '@modules/course_subject/entity/course_subject.ent
 import { DeleteSubjectCourseDto } from './dto/deleteSubject.dto';
 import { EmailDto } from 'src/common/dto/email.dto';
 import { SupervisorCourse } from '@modules/supervisor_course/entity/supervisor_course.entity';
-import { Roles } from 'src/decorators/roles.decorator';
-import { ERolesUser } from '@modules/users/enums/index.enum';
-import { SessionAuthGuard } from '@modules/auth/guards/session.guard';
+import { FindCourseDto } from './dto/findCourse.dto';
+import { RemoveCreatorInterceptor } from 'src/interceptors/removeCreator.interceptor';
 import { RolesGuard } from '@modules/auth/guards/roles.guard';
+import { SessionAuthGuard } from '@modules/auth/guards/session.guard';
+import { ERolesUser } from '@modules/users/enums/index.enum';
+import { Roles } from 'src/decorators/roles.decorator';
 
 @Controller('courses')
 @ApiTags('courses')
+@UseInterceptors(RemoveCreatorInterceptor)
 export class CourseController {
     constructor(private readonly courseService: CourseService) {}
 
     @Roles(ERolesUser.SUPERVISOR)
     @UseGuards(SessionAuthGuard, RolesGuard)
+    @Get('supervisor')
+    async getCourseBySupervisor(
+        @Query() dto: FindCourseDto,
+        @CurrentUserDecorator() user: User,
+    ): Promise<AppResponse<Course[]>> {
+        return {
+            data: await this.courseService.supervisorFindCourse(dto, user),
+        };
+    }
+
+    @Roles(ERolesUser.SUPERVISOR)
+    @UseGuards(SessionAuthGuard, RolesGuard)
+    @Get('supervisor/:courseId')
+    async getCourseDetailBySupervisor(
+        @Param('courseId') courseId: string,
+        @CurrentUserDecorator() user: User,
+    ): Promise<AppResponse<Course>> {
+        return {
+            data: await this.courseService.getCourseDetailForSupervisor(courseId, user),
+        };
+    }
+
     @Post()
     async createCourse(@Body() dto: CreateCourseDto, @CurrentUserDecorator() user: User): Promise<AppResponse<Course>> {
         return await this.courseService.createNewCourse(dto, user);
