@@ -151,6 +151,35 @@ export class CourseService extends BaseServiceAbstract<Course> {
         return await queryBuilder.getMany();
     }
 
+    async getCourseForTrainee(dto: FindCourseDto, user: User): Promise<AppResponse<CourseWithoutCreatorDto[]>> {
+        const { name, creatorName, page, pageSize } = dto;
+        const { limit, skip } = getLimitAndSkipHelper(page, pageSize);
+
+        const queryBuilder = this.courseRepository
+            .createQueryBuilder('course')
+            .innerJoinAndSelect('course.userCourses', 'userCourses')
+            .innerJoinAndSelect('course.creator', 'creator')
+            .where('userCourses.userId = :userId', { userId: user.id });
+
+        if (name) {
+            queryBuilder.andWhere('course.name ILIKE :name', {
+                name: `%${name}%`,
+            });
+        }
+
+        if (creatorName) {
+            queryBuilder.andWhere('creator.name ILIKE :creatorName', {
+                creatorName: `%${creatorName}%`,
+            });
+        }
+
+        queryBuilder.skip(skip).take(limit);
+
+        return {
+            data: plainToInstance(CourseWithoutCreatorDto, await queryBuilder.getMany()),
+        };
+    }
+
     private async _getCourseDetail(courseId: string): Promise<Course> {
         const course = await this.courseRepository
             .createQueryBuilder('course')
