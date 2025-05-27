@@ -48,7 +48,7 @@ export class Course extends BaseEntity {
     creator: User;
 
     @OneToMany(() => CourseSubject, (courseSubject) => courseSubject.course)
-    courseSubjects: CourseSubject;
+    courseSubjects: CourseSubject[];
 
     @OneToMany(() => UserCourse, (userCourse) => userCourse.course)
     userCourses: UserCourse[];
