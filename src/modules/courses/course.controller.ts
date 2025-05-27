@@ -145,4 +145,14 @@ export class CourseController {
     ): Promise<AppResponse<UpdateResult>> {
         return await this.courseService.deleteSubjectForCourse(id, dto, user);
     }
+
+    @Roles(ERolesUser.TRAINEE)
+    @UseGuards(SessionAuthGuard, RolesGuard)
+    @Get('trainee/list')
+    async getCourseByTrainee(
+        @Query() dto: FindCourseDto,
+        @CurrentUserDecorator() user: User,
+    ): Promise<AppResponse<CourseWithoutCreatorDto[]>> {
+        return await this.courseService.getCourseForTrainee(dto, user);
+    }
 }
