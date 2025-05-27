@@ -23,6 +23,10 @@ import { UsersService } from '@modules/users/user.services';
 import { ERolesUser } from '@modules/users/enums/index.enum';
 import { AppResponse } from 'src/types/common.type';
 import { SupervisorCourse } from '@modules/supervisor_course/entity/supervisor_course.entity';
+import { getLimitAndSkipHelper } from 'src/helper/pagination.helper';
+import { FindCourseDto } from './dto/findCourse.dto';
+import { plainToInstance } from 'class-transformer';
+import { CourseWithoutCreatorDto } from './responseDto/courseResponse.dto';
 
 @Injectable()
 export class CourseService extends BaseServiceAbstract<Course> {
@@ -37,7 +41,7 @@ export class CourseService extends BaseServiceAbstract<Course> {
         super(courseRepository);
     }
 
-    async createNewCourse(dto: CreateCourseDto, user: User): Promise<Promise<AppResponse<Course>>> {
+    async createNewCourse(dto: CreateCourseDto, user: User): Promise<Promise<AppResponse<CourseWithoutCreatorDto>>> {
         const { startDate, endDate, ...data } = dto;
         const course = await this.courseRepository.findOneByCondition({
             name: data.name,
@@ -56,8 +60,66 @@ export class CourseService extends BaseServiceAbstract<Course> {
             user: user,
         });
         return {
-            data: newCourse,
+            data: plainToInstance(CourseWithoutCreatorDto, newCourse),
         };
+    }
+
+    async supervisorFindCourse(dto: FindCourseDto, user: User): Promise<Course[]> {
+        const { name, creatorName, page, pageSize } = dto;
+        const { limit, skip } = getLimitAndSkipHelper(page, pageSize);
+
+        const queryBuilder = this.courseRepository
+            .createQueryBuilder('course')
+            .innerJoinAndSelect('course.supervisorCourses', 'supervisorCourses')
+            .where('supervisorCourses.userId = :userId', { userId: user.id });
+
+        if (name) {
+            queryBuilder.andWhere('course.name ILIKE :name', {
+                name: `%${name}%`,
+            });
+        }
+
+        if (creatorName) {
+            queryBuilder.andWhere('creator.name ILIKE :creatorName', {
+                creatorName: `%${creatorName}%`,
+            });
+        }
+
+        queryBuilder.skip(skip).take(limit);
+
+        return await queryBuilder.getMany();
+    }
+
+    async _getCourseDetail(courseId: string): Promise<Course> {
+        const course = await this.courseRepository
+            .createQueryBuilder('course')
+            .leftJoinAndSelect('course.courseSubjects', 'courseSubject')
+            .leftJoinAndSelect('courseSubject.subject', 'subject')
+            .leftJoinAndSelect('subject.tasksCreated', 'task')
+            .where('course.id = :courseId', { courseId })
+            .getOne();
+
+        if (!course) {
+            throw new NotFoundException('Course not found');
+        }
+
+        return course;
+    }
+
+    async getCourseDetailForSupervisor(courseId: string, user: User): Promise<Course> {
+        const userIsSupervisorOfCourse = await this.supervisorCourseService.findOneByCondition({
+            course: {
+                id: courseId,
+            },
+            user: {
+                id: user.id,
+            },
+        });
+        if (userIsSupervisorOfCourse) {
+            return await this._getCourseDetail(courseId);
+        } else {
+            throw new ForbiddenException('auths.Forbidden Resource');
+        }
     }
 
     async updateCourseInfo(dto: UpdateCourseDto, user: User, id: string): Promise<AppResponse<UpdateResult>> {

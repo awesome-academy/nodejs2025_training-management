@@ -1,4 +1,12 @@
-import { FindOptionsWhere, FindOneOptions, SaveOptions, UpdateResult, DeleteResult, DeepPartial } from 'typeorm';
+import {
+    FindOptionsWhere,
+    FindOneOptions,
+    SaveOptions,
+    UpdateResult,
+    DeleteResult,
+    DeepPartial,
+    SelectQueryBuilder,
+} from 'typeorm';
 import { FindAllResponse } from 'src/types/common.type';
 
 export interface BaseRepositoryInterface<T> {
@@ -15,4 +23,5 @@ export interface BaseRepositoryInterface<T> {
     upsertDocument(filter: FindOptionsWhere<T>, dto: DeepPartial<T>, options?: SaveOptions): Promise<T>;
     softDeleteMany(filter: FindOptionsWhere<T>): Promise<UpdateResult>;
     deleteMany(filter: FindOptionsWhere<T>): Promise<DeleteResult>;
+    createQueryBuilder(alias: string): SelectQueryBuilder<T>;
 }
