@@ -13,7 +13,7 @@ import { CreateCourseDto } from './dto/createCourse.dto';
 import { User } from '@modules/users/entity/user.entity';
 import { SupervisorCourseService } from '@modules/supervisor_course/supervisor_course.service';
 import { UpdateCourseDto } from './dto/updateCourse.dto';
-import { UpdateResult } from 'typeorm';
+import { Not, UpdateResult } from 'typeorm';
 import { CourseSubjectService } from '@modules/course_subject/course_subject.service';
 import { UpdateSubjectForCourseDto } from './dto/UpdateSubjectForTask.dto';
 import { CourseSubject } from '@modules/course_subject/entity/course_subject.entity';
@@ -32,6 +32,7 @@ import { FindCourseDto } from './dto/findCourse.dto';
 import { plainToInstance } from 'class-transformer';
 import { CourseWithoutCreatorDto } from './responseDto/courseResponse.dto';
 import { TraineeDto, UpdateStatusTraineeDto } from './dto/trainee.dto';
+import { EUserCourseStatus } from '@modules/user_course/enum/index.enum';
 
 @Injectable()
 export class CourseService extends BaseServiceAbstract<Course> {
@@ -178,6 +179,25 @@ export class CourseService extends BaseServiceAbstract<Course> {
         return {
             data: plainToInstance(CourseWithoutCreatorDto, await queryBuilder.getMany()),
         };
+    }
+
+    async getCourseDetailForTrainee(courseId: string, user: User): Promise<AppResponse<Course>> {
+        const course = await this.courseRepository.findOneById(courseId) 
+        if (!course) {
+            throw new NotFoundException('courses.Course not found');
+        }
+        const userIsTraineeOfCourse = await this.userCourseService.findOneByCondition({
+            user: { id: user.id },
+            course: { id: courseId },
+            status: Not(EUserCourseStatus.INACTIVE),
+        });
+        if (!userIsTraineeOfCourse) {
+            throw new ForbiddenException('auths.Forbidden Resource');
+        } else {
+            return {
+                data: await this._getCourseDetail(courseId),
+            };
+        }
     }
 
     private async _getCourseDetail(courseId: string): Promise<Course> {
