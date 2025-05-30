@@ -182,10 +182,7 @@ export class CourseService extends BaseServiceAbstract<Course> {
     }
 
     async getCourseDetailForTrainee(courseId: string, user: User): Promise<AppResponse<Course>> {
-        const course = await this.courseRepository.findOneById(courseId);
-        if (!course) {
-            throw new NotFoundException('courses.Course not found');
-        }
+        await this._checkCourseExists(courseId);
         const userIsTraineeOfCourse = await this.userCourseService.findOneByCondition({
             user: { id: user.id },
             course: { id: courseId },
@@ -198,6 +195,30 @@ export class CourseService extends BaseServiceAbstract<Course> {
                 data: await this._getCourseDetail(courseId),
             };
         }
+    }
+
+    async getMembersNameOfCourseForTrainee(courseId: string, user: User): Promise<AppResponse<string[]>> {
+        await this._checkCourseExists(courseId);
+        const userIsTraineeOfCourse = await this.userCourseService.findOneByCondition({
+            user: { id: user.id },
+            course: { id: courseId },
+        });
+        if (!userIsTraineeOfCourse) {
+            throw new ForbiddenException('auths.Forbidden Resource');
+        }
+        const memberOfCourse = (
+            await this.userCourseService.findAll(
+                {
+                    course: { id: courseId },
+                },
+                {
+                    relations: ['user'],
+                },
+            )
+        ).items.map((userCourse) => userCourse.user.name);
+        return {
+            data: memberOfCourse,
+        };
     }
 
     private async _getCourseDetail(courseId: string): Promise<Course> {
@@ -362,5 +383,12 @@ export class CourseService extends BaseServiceAbstract<Course> {
     private _parseDateString(dateStr: string): Date {
         const [day, month, year] = dateStr.split('/').map(Number);
         return new Date(year, month - 1, day);
+    }
+
+    private async _checkCourseExists(courseId: string): Promise<void> {
+        const course = await this.courseRepository.findOneById(courseId);
+        if (!course) {
+            throw new NotFoundException('courses.Course not found');
+        }
     }
 }
