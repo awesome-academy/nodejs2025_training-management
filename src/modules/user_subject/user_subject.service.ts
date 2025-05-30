@@ -8,6 +8,7 @@ import { In, UpdateResult } from 'typeorm';
 import { UserTaskService } from '@modules/user_task/user_task.service';
 import { EUserTaskStatus } from '@modules/user_task/enum/index.enum';
 import { EUserSubjectStatus } from './enum/index.enum';
+import { UserCourseService } from '@modules/user_course/user_course.service';
 
 @Injectable()
 export class UserSubjectService extends BaseServiceAbstract<UserSubject> {
@@ -15,6 +16,7 @@ export class UserSubjectService extends BaseServiceAbstract<UserSubject> {
         @Inject('USER_SUBJECT_REPOSITORY')
         private readonly userSubjectRepository: UserSubjectRepository,
         private readonly userTaskService: UserTaskService,
+        private readonly userCourseService: UserCourseService,
     ) {
         super(userSubjectRepository);
     }
@@ -27,8 +29,8 @@ export class UserSubjectService extends BaseServiceAbstract<UserSubject> {
     }
 
     async finishSubjectForTrainee(userSubjectId: string, trainee: User): Promise<AppResponse<UpdateResult>> {
-        const isAuthorized = await this._checkTraineeCanUpdateStatus(userSubjectId, trainee);
-        if (!isAuthorized) {
+        const userSubject = await this._checkTraineeCanUpdateStatus(userSubjectId, trainee);
+        if (!userSubject) {
             throw new ForbiddenException('auths.Forbidden Resource');
         }
 
@@ -45,6 +47,8 @@ export class UserSubjectService extends BaseServiceAbstract<UserSubject> {
                 status: EUserSubjectStatus.FINISH,
             });
 
+            await this.updateProgressForCourse(userSubject);
+
             return { data: updateResult };
         } catch (error) {
             console.error('Failed to finish subject:', error);
@@ -52,18 +56,47 @@ export class UserSubjectService extends BaseServiceAbstract<UserSubject> {
         }
     }
 
-    private async _checkTraineeCanUpdateStatus(userSubjectId: string, trainee: User): Promise<boolean> {
+    private async _checkTraineeCanUpdateStatus(userSubjectId: string, trainee: User): Promise<UserSubject | null> {
         const userSubject = await this.userSubjectRepository.findOneByCondition(
             {
                 id: userSubjectId,
             },
             {
-                relations: ['user'],
+                relations: ['user', 'courseSubject', 'courseSubject.course'],
             },
         );
         if (!userSubject || userSubject.user.id !== trainee.id) {
-            return false;
+            return null;
         }
-        return true;
+
+        return userSubject;
+    }
+
+    async updateProgressForCourse(userSubject: UserSubject) {
+        const userId = userSubject.user.id;
+        const courseId = userSubject.courseSubject.course.id;
+        const { total, finished } = await this._countSubjects(userId, courseId);
+        const progress = total > 0 ? parseFloat(((finished / total) * 100).toFixed(2)) : 0;
+        await this.userCourseService.updateUserCourseProgress(courseId, userId, progress);
+    }
+
+    private async _countSubjects(userId: string, courseId: string): Promise<{ total: number; finished: number }> {
+        const query = this.userSubjectRepository
+            .createQueryBuilder('userSubject')
+            .innerJoin('userSubject.courseSubject', 'courseSubject')
+            .innerJoin('courseSubject.course', 'course')
+            .where('userSubject.userId = :userId', { userId })
+            .andWhere('course.id = :courseId', { courseId });
+
+        const [total, finished] = await Promise.all([
+            query.getCount(),
+            query
+                .andWhere('userSubject.status = :status', {
+                    status: EUserSubjectStatus.FINISH,
+                })
+                .getCount(),
+        ]);
+
+        return { total, finished };
     }
 }
