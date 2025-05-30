@@ -165,4 +165,14 @@ export class CourseController {
     ): Promise<AppResponse<Course>> {
         return await this.courseService.getCourseDetailForTrainee(courseId, user);
     }
+
+    @Roles(ERolesUser.TRAINEE)
+    @UseGuards(SessionAuthGuard, RolesGuard)
+    @Get('trainee/members')
+    async getMemberOfCourseByTrainee(
+        @Query('courseId') courseId: string,
+        @CurrentUserDecorator() user: User,
+    ): Promise<AppResponse<string[]>> {
+        return await this.courseService.getMembersNameOfCourseForTrainee(courseId, user);
+    }
 }
