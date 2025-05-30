@@ -38,31 +38,39 @@ export class UserTaskService extends BaseServiceAbstract<UserTask> {
     }
 
     async updateStatusForUser(userTaskId: string, user: User): Promise<AppResponse<FinishTaskResponseType>> {
-        const userSubjectId = await this._checkUserCanUpdateStatusAndReturnUserSubjecctId(userTaskId, user);
-        if (!userSubjectId) {
+        const userSubject = await this._checkUserCanUpdateStatusAndReturnUserSubject(userTaskId, user);
+        if (!userSubject) {
             throw new ForbiddenException('auths.Forbidden Resource');
         }
         const userTaskUpdated: UpdateResult = await this.userTaskRepository.update(userTaskId, {
             status: EUserTaskStatus.FINISH,
         });
-        const numberOfTaskIsNotFinish = await this._countNumberTaskOfSubjectIsNotFinish(userSubjectId);
+        const numberOfTaskIsNotFinish = await this._countNumberTaskOfSubjectIsNotFinish(userSubject.id);
         if (numberOfTaskIsNotFinish === 0) {
-            await this.userSubjectService.update(userSubjectId, {
+            await this.userSubjectService.update(userSubject.id, {
                 status: EUserSubjectStatus.FINISH,
             });
+            await this.userSubjectService.updateProgressForCourse(userSubject);
         }
         return {
             data: { ...userTaskUpdated, isSubjectFinish: numberOfTaskIsNotFinish === 0 },
         };
     }
 
-    private async _checkUserCanUpdateStatusAndReturnUserSubjecctId(
+    private async _checkUserCanUpdateStatusAndReturnUserSubject(
         userTaskId: string,
         user: User,
-    ): Promise<string | null> {
+    ): Promise<UserSubject | null> {
         const userTask = await this.userTaskRepository.findOneByCondition(
             { id: userTaskId },
-            { relations: ['userSubject', 'userSubject.user'] },
+            {
+                relations: [
+                    'userSubject',
+                    'userSubject.user',
+                    'userSubject.courseSubject',
+                    'userSubject.courseSubject.course',
+                ],
+            },
         );
         if (
             !userTask ||
@@ -73,10 +81,10 @@ export class UserTaskService extends BaseServiceAbstract<UserTask> {
             return null;
         }
 
-        return userTask.userSubject.id;
+        return userTask.userSubject;
     }
 
-    async _countNumberTaskOfSubjectIsNotFinish(userSubjectId: string): Promise<number> {
+    private async _countNumberTaskOfSubjectIsNotFinish(userSubjectId: string): Promise<number> {
         const userTask = await this.userTaskRepository.findAll({
             userSubject: { id: userSubjectId },
             status: EUserTaskStatus.NOT_FINISH,
