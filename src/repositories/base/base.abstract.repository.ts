@@ -9,6 +9,7 @@ import {
     UpdateResult,
     DeleteResult,
     SelectQueryBuilder,
+    FindManyOptions,
 } from 'typeorm';
 import { BaseEntity } from '@modules/shared/base/base.entity';
 import { FindAllResponse } from 'src/types/common.type';
@@ -45,7 +46,7 @@ export abstract class BaseRepositoryAbstract<T extends BaseEntity> implements Ba
         return await this.repository.findOne({ where: condition, ...options });
     }
 
-    async findAll(condition: FindOptionsWhere<T>, options?: FindOneOptions<T>): Promise<FindAllResponse<T>> {
+    async findAll(condition: FindOptionsWhere<T>, options?: FindManyOptions<T>): Promise<FindAllResponse<T>> {
         const [items, count] = await this.repository.findAndCount({
             where: condition,
             ...options,

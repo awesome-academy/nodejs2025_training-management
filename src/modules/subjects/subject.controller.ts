@@ -1,7 +1,7 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { SubjectService } from './subjects.service';
 import { CreateSubjectDto } from './dto/createSubject.dto';
-import { AppResponse } from 'src/types/common.type';
+import { AppResponse, FindAllResponse } from 'src/types/common.type';
 import { Subject } from './entity/subject.entity';
 import { UpdateResult } from 'typeorm';
 import { UpdateSubjectDto, UpdateSubjectTask } from './dto/updateSubject.dto';
@@ -13,6 +13,8 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { RolesGuard } from '@modules/auth/guards/roles.guard';
 import { Task } from '@modules/tasks/entity/task.entity';
 import { ERolesUser } from '@modules/users/enums/index.enum';
+import { FindSubjectDto } from './dto/find.dto';
+import { SubjectResponseDto } from './dto/subjectResponse.dto';
 
 @Controller('subjects')
 @ApiTags('subjects')
@@ -22,8 +24,21 @@ export class SubjectController {
     @Roles(ERolesUser.SUPERVISOR)
     @UseGuards(SessionAuthGuard, RolesGuard)
     @Get()
-    async getAllSubject(@CurrentUserDecorator() user: User): Promise<AppResponse<Subject[]>> {
-        return await this.subjectService.getSubjectBySupervisor(user);
+    async getSubjectDetail(
+        @Query('subjectId') subjectId: string,
+        @CurrentUserDecorator() user: User,
+    ): Promise<AppResponse<SubjectResponseDto>> {
+        return await this.subjectService.getSubjectDetail(subjectId, user);
+    }
+
+    @Roles(ERolesUser.SUPERVISOR)
+    @UseGuards(SessionAuthGuard, RolesGuard)
+    @Get('list')
+    async getAllSubject(
+        @Query() dto: FindSubjectDto,
+        @CurrentUserDecorator() user: User,
+    ): Promise<AppResponse<FindAllResponse<Subject>>> {
+        return await this.subjectService.getSubjectList(dto, user);
     }
 
     @Roles(ERolesUser.SUPERVISOR)
