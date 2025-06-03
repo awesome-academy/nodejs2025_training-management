@@ -6,6 +6,7 @@ import {
     DeleteResult,
     DeepPartial,
     SelectQueryBuilder,
+    FindManyOptions,
 } from 'typeorm';
 import { FindAllResponse } from 'src/types/common.type';
 
@@ -14,7 +15,7 @@ export interface BaseRepositoryInterface<T> {
     insert(dtos: DeepPartial<T>[]): Promise<T[]>;
     findOneById(id: string, options?: FindOneOptions<T>): Promise<T | null>;
     findOneByCondition(condition: FindOptionsWhere<T>, options?: FindOneOptions<T>): Promise<T | null>;
-    findAll(condition: FindOptionsWhere<T>, options?: FindOneOptions<T>): Promise<FindAllResponse<T>>;
+    findAll(condition: FindOptionsWhere<T>, options?: FindManyOptions<T>): Promise<FindAllResponse<T>>;
     find(condition: FindOptionsWhere<T>, options?: FindOneOptions<T>): Promise<T[]>;
     update(id: string, dto: DeepPartial<T>): Promise<UpdateResult>; // Ensure DeepPartial<T> is used
     softDelete(id: string): Promise<UpdateResult>;
