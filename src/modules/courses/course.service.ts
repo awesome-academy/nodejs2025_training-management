@@ -13,7 +13,7 @@ import { CreateCourseDto } from './dto/createCourse.dto';
 import { User } from '@modules/users/entity/user.entity';
 import { SupervisorCourseService } from '@modules/supervisor_course/supervisor_course.service';
 import { UpdateCourseDto } from './dto/updateCourse.dto';
-import { Not, UpdateResult } from 'typeorm';
+import { EntityManager, ILike, Not, QueryRunner, UpdateResult } from 'typeorm';
 import { CourseSubjectService } from '@modules/course_subject/course_subject.service';
 import { UpdateSubjectForCourseDto } from './dto/UpdateSubjectForTask.dto';
 import { CourseSubject } from '@modules/course_subject/entity/course_subject.entity';
@@ -24,7 +24,7 @@ import { ERolesUser } from '@modules/users/enums/index.enum';
 import { SupervisorCourse } from '@modules/supervisor_course/entity/supervisor_course.entity';
 import { getLimitAndSkipHelper } from 'src/helper/pagination.helper';
 import { UserCourseService } from '@modules/user_course/user_course.service';
-import { AppResponse } from 'src/types/common.type';
+import { AppResponse, FindAllResponse } from 'src/types/common.type';
 import { UserCourse } from '@modules/user_course/entity/user_course.entity';
 import { UserSubjectService } from '@modules/user_subject/user_subject.service';
 import { UserTaskService } from '@modules/user_task/user_task.service';
@@ -33,6 +33,9 @@ import { plainToInstance } from 'class-transformer';
 import { CourseWithoutCreatorDto } from './responseDto/courseResponse.dto';
 import { TraineeDto, UpdateStatusTraineeDto } from './dto/trainee.dto';
 import { EUserCourseStatus } from '@modules/user_course/enum/index.enum';
+import { parseDateString } from 'src/helper/date.helper';
+import { FindMemberOfCourseDto } from './dto/findMember.dto';
+import { UserCourseResponse } from '@modules/user_course/dto/UserCourseResponse.dto';
 
 @Injectable()
 export class CourseService extends BaseServiceAbstract<Course> {
@@ -51,26 +54,48 @@ export class CourseService extends BaseServiceAbstract<Course> {
     }
 
     async createNewCourse(dto: CreateCourseDto, user: User): Promise<Promise<AppResponse<CourseWithoutCreatorDto>>> {
-        const { startDate, endDate, ...data } = dto;
+        const { startDate, endDate, subjectIds, ...data } = dto;
         const course = await this.courseRepository.findOneByCondition({
             name: data.name,
         });
         if (course) {
             throw new UnprocessableEntityException('courses.Course is existed');
         }
-        const newCourse = await this.courseRepository.create({
-            ...data,
-            startDate: this._parseDateString(startDate),
-            endDate: this._parseDateString(endDate),
-            creator: user,
-        });
-        await this.supervisorCourseService.create({
-            course: newCourse,
-            user: user,
-        });
-        return {
-            data: plainToInstance(CourseWithoutCreatorDto, newCourse),
-        };
+        this._checkStartDateIsBeforeEndDate(startDate, endDate);
+        if (subjectIds.length < 1) {
+            throw new UnprocessableEntityException('courses.At least one subject is required');
+        }
+        const transaction: QueryRunner = await this.courseRepository.startTransaction();
+        try {
+            const newCourse = await this.courseRepository.create(
+                {
+                    ...data,
+                    startDate: parseDateString(startDate),
+                    endDate: parseDateString(endDate),
+                    creator: user,
+                },
+                undefined,
+                transaction.manager,
+            );
+            await this.supervisorCourseService.create(
+                {
+                    course: newCourse,
+                    user: user,
+                },
+                transaction.manager,
+            );
+            await this.addSubjectForCourse({ subjectIds: subjectIds }, user, newCourse.id, transaction.manager);
+            await transaction.commitTransaction();
+            return {
+                data: plainToInstance(CourseWithoutCreatorDto, newCourse),
+            };
+        } catch (error) {
+            await transaction.rollbackTransaction();
+            console.log(error);
+            throw new UnprocessableEntityException('courses.Error happens when creating new course');
+        } finally {
+            await transaction.release();
+        }
     }
 
     async addTraineesToCourse(dto: TraineeDto, user: User): Promise<AppResponse<UserCourse[]>> {
@@ -89,6 +114,50 @@ export class CourseService extends BaseServiceAbstract<Course> {
         }
     }
 
+    async getAllTraineeCourseForCourse(
+        dto: FindMemberOfCourseDto,
+        user: User,
+    ): Promise<AppResponse<FindAllResponse<UserCourseResponse>>> {
+        const { page, pageSize, search, courseId } = dto;
+        const course = await this.courseRepository.findOneByCondition({
+            id: courseId,
+            supervisorCourses: { user: { id: user.id } },
+        });
+        if (!course) {
+            throw new ForbiddenException('Forbidden Resource');
+        }
+        const { limit, skip } = getLimitAndSkipHelper(page, pageSize);
+
+        const condition: any = {
+            course: {
+                id: courseId,
+            },
+        };
+
+        if (search) {
+            condition.user = {
+                name: ILike(`%${search}%`),
+            };
+        }
+
+        const result = await this.userCourseService.findAll(condition, {
+            skip,
+            take: limit,
+            relations: ['user'],
+        });
+
+        const formattedItems: UserCourseResponse[] = result.items.map((item) =>
+            plainToInstance(UserCourseResponse, item),
+        );
+
+        return {
+            data: {
+                count: result.count,
+                items: formattedItems,
+            },
+        };
+    }
+
     async addTraineeForCourse(email: string, courseId: string): Promise<UserCourse> {
         const trainee = await this.userService.findOneByCondition({
             email: email,
@@ -100,7 +169,7 @@ export class CourseService extends BaseServiceAbstract<Course> {
         const courseDetail = await this._getCourseDetail(courseId);
         const courseSubjectsDetail = await this._getSubjectsAndTaskListFromCourseDetail(courseDetail);
         for (let i = 0; i < courseSubjectsDetail.length; i++) {
-            const courseSubject = courseSubjectsDetail[0];
+            const courseSubject = courseSubjectsDetail[i];
             const userSubject = await this.userSubjectService.addTraineeForUserSubject(
                 courseSubject.courseSubjectId,
                 trainee,
@@ -126,13 +195,14 @@ export class CourseService extends BaseServiceAbstract<Course> {
         };
     }
 
-    async supervisorFindCourse(dto: FindCourseDto, user: User): Promise<Course[]> {
+    async supervisorFindCourse(dto: FindCourseDto, user: User): Promise<AppResponse<FindAllResponse<Course>>> {
         const { name, creatorName, page, pageSize } = dto;
         const { limit, skip } = getLimitAndSkipHelper(page, pageSize);
 
         const queryBuilder = this.courseRepository
             .createQueryBuilder('course')
             .innerJoinAndSelect('course.supervisorCourses', 'supervisorCourses')
+            .innerJoinAndSelect('course.creator', 'creator')
             .where('supervisorCourses.userId = :userId', { userId: user.id });
 
         if (name) {
@@ -149,7 +219,14 @@ export class CourseService extends BaseServiceAbstract<Course> {
 
         queryBuilder.skip(skip).take(limit);
 
-        return await queryBuilder.getMany();
+        const [items, count] = await queryBuilder.getManyAndCount();
+
+        return {
+            data: {
+                items,
+                count,
+            },
+        };
     }
 
     async getCourseForTrainee(dto: FindCourseDto, user: User): Promise<AppResponse<CourseWithoutCreatorDto[]>> {
@@ -192,9 +269,32 @@ export class CourseService extends BaseServiceAbstract<Course> {
             throw new ForbiddenException('auths.Forbidden Resource');
         } else {
             return {
-                data: await this._getCourseDetail(courseId),
+                data: await this._getCourseDetailForTrainee(courseId, user),
             };
         }
+    }
+
+    private async _getCourseDetailForTrainee(courseId: string, user: User) {
+        const course = await this.courseRepository
+            .createQueryBuilder('course')
+            .leftJoinAndSelect('course.courseSubjects', 'courseSubject')
+            .leftJoinAndSelect('courseSubject.subject', 'subject')
+            .leftJoinAndSelect(
+                'courseSubject.userSubjects',
+                'userSubject',
+                'userSubject.userId = :userId AND userSubject.courseSubjectId = courseSubject.id',
+                { userId: user.id },
+            )
+            .leftJoinAndSelect('userSubject.userTasks', 'userTask')
+            .leftJoinAndSelect('userTask.task', 'task', 'userTask.userSubjectId = userSubject.id')
+            .where('course.id = :courseId', { courseId })
+            .getOne();
+
+        if (!course) {
+            throw new NotFoundException('courses.Course not found');
+        }
+
+        return course;
     }
 
     async getMembersNameOfCourseForTrainee(courseId: string, user: User): Promise<AppResponse<string[]>> {
@@ -252,7 +352,7 @@ export class CourseService extends BaseServiceAbstract<Course> {
         });
     }
 
-    async getCourseDetailForSupervisor(courseId: string, user: User): Promise<Course> {
+    async getCourseDetailForSupervisor(courseId: string, user: User): Promise<AppResponse<Course>> {
         const userIsSupervisorOfCourse = await this.supervisorCourseService.findOneByCondition({
             course: {
                 id: courseId,
@@ -262,7 +362,9 @@ export class CourseService extends BaseServiceAbstract<Course> {
             },
         });
         if (userIsSupervisorOfCourse) {
-            return await this._getCourseDetail(courseId);
+            return {
+                data: await this._getCourseDetail(courseId),
+            };
         } else {
             throw new ForbiddenException('auths.Forbidden Resource');
         }
@@ -283,15 +385,16 @@ export class CourseService extends BaseServiceAbstract<Course> {
         dto: UpdateSubjectForCourseDto,
         user: User,
         id: string,
+        manager?: EntityManager,
     ): Promise<AppResponse<CourseSubject[]>> {
-        const checkCourseIdStudyByTrainee = await this._checkCourseIsStudyByTrainee(id);
+        const checkCourseIdStudyByTrainee = await this._checkCourseIsStudyByTrainee(id, manager);
         if (checkCourseIdStudyByTrainee) {
             throw new UnprocessableEntityException('courses.Can not adjust this course');
         }
         const { subjectIds } = dto;
-        await this._checkUserPermissionForCourse(id, user);
+        await this._checkUserPermissionForCourse(id, user, manager);
         return {
-            data: await this.courseSubjectService.addSubjectCourse(id, subjectIds),
+            data: await this.courseSubjectService.addSubjectCourse(id, subjectIds, manager),
         };
     }
 
@@ -323,7 +426,7 @@ export class CourseService extends BaseServiceAbstract<Course> {
         };
     }
 
-    private async _checkUserPermissionForCourse(courseId: string, user: User): Promise<void> {
+    private async _checkUserPermissionForCourse(courseId: string, user: User, manager?: EntityManager): Promise<void> {
         const course = await this.courseRepository.findOneByCondition(
             {
                 id: courseId,
@@ -331,6 +434,7 @@ export class CourseService extends BaseServiceAbstract<Course> {
             {
                 relations: ['creator'],
             },
+            manager,
         );
         if (!course) {
             throw new NotFoundException('course.Course not found');
@@ -370,8 +474,12 @@ export class CourseService extends BaseServiceAbstract<Course> {
         };
     }
 
-    private async _checkCourseIsStudyByTrainee(courseId: string): Promise<boolean> {
-        const course = await this.courseRepository.findOneByCondition({ id: courseId }, { relations: ['userCourses'] });
+    private async _checkCourseIsStudyByTrainee(courseId: string, manager?: EntityManager): Promise<boolean> {
+        const course = await this.courseRepository.findOneByCondition(
+            { id: courseId },
+            { relations: ['userCourses'] },
+            manager,
+        );
 
         if (!course) {
             throw new NotFoundException('courses.Course not found');
@@ -380,15 +488,19 @@ export class CourseService extends BaseServiceAbstract<Course> {
         return course.userCourses.length > 0;
     }
 
-    private _parseDateString(dateStr: string): Date {
-        const [day, month, year] = dateStr.split('/').map(Number);
-        return new Date(year, month - 1, day);
-    }
-
     private async _checkCourseExists(courseId: string): Promise<void> {
         const course = await this.courseRepository.findOneById(courseId);
         if (!course) {
             throw new NotFoundException('courses.Course not found');
+        }
+    }
+
+    private _checkStartDateIsBeforeEndDate(startDate: string, endDate: string) {
+        const start = parseDateString(startDate);
+        const end = parseDateString(endDate);
+
+        if (end.getTime() <= start.getTime()) {
+            throw new UnprocessableEntityException('Start date must be before end date.');
         }
     }
 }

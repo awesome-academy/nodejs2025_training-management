@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CreateCourseDto } from './dto/createCourse.dto';
-import { AppResponse } from 'src/types/common.type';
+import { AppResponse, FindAllResponse } from 'src/types/common.type';
 import { CourseService } from './course.service';
 import { Course } from './entity/course.entity';
 import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
@@ -33,6 +33,8 @@ import { Roles } from 'src/decorators/roles.decorator';
 import { TraineeDto, UpdateStatusTraineeDto } from './dto/trainee.dto';
 import { UserCourse } from '@modules/user_course/entity/user_course.entity';
 import { CourseWithoutCreatorDto } from './responseDto/courseResponse.dto';
+import { FindMemberOfCourseDto } from './dto/findMember.dto';
+import { UserCourseResponse } from '@modules/user_course/dto/UserCourseResponse.dto';
 
 @Controller('courses')
 @ApiTags('courses')
@@ -45,10 +47,8 @@ export class CourseController {
     async getCourseBySupervisor(
         @Query() dto: FindCourseDto,
         @CurrentUserDecorator() user: User,
-    ): Promise<AppResponse<Course[]>> {
-        return {
-            data: await this.courseService.supervisorFindCourse(dto, user),
-        };
+    ): Promise<AppResponse<FindAllResponse<Course>>> {
+        return await this.courseService.supervisorFindCourse(dto, user);
     }
 
     @Roles(ERolesUser.SUPERVISOR)
@@ -58,9 +58,7 @@ export class CourseController {
         @Query('courseId') courseId: string,
         @CurrentUserDecorator() user: User,
     ): Promise<AppResponse<Course>> {
-        return {
-            data: await this.courseService.getCourseDetailForSupervisor(courseId, user),
-        };
+        return await this.courseService.getCourseDetailForSupervisor(courseId, user);
     }
 
     @Roles(ERolesUser.SUPERVISOR)
@@ -68,6 +66,16 @@ export class CourseController {
     @Post('supervisor/trainee')
     async addTrainee(@Body() dto: TraineeDto, @CurrentUserDecorator() user: User): Promise<AppResponse<UserCourse[]>> {
         return await this.courseService.addTraineesToCourse(dto, user);
+    }
+
+    @Roles(ERolesUser.SUPERVISOR)
+    @UseGuards(SessionAuthGuard, RolesGuard)
+    @Get('supervisor/members')
+    async getMemberOfCourses(
+        @Query() dto: FindMemberOfCourseDto,
+        @CurrentUserDecorator() user: User,
+    ): Promise<AppResponse<FindAllResponse<UserCourseResponse>>> {
+        return await this.courseService.getAllTraineeCourseForCourse(dto, user);
     }
 
     @Roles(ERolesUser.SUPERVISOR)
