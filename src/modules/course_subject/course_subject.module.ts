@@ -5,11 +5,23 @@ import { CourseSubjectService } from './course_subject.service';
 import { courseSubjectProviders } from './course_subject.provider';
 import { CourseModule } from '@modules/courses/course.module';
 import { SubjectModule } from '@modules/subjects/subjects.module';
+import { UserSubjectModule } from '@modules/user_subject/user_subject.module';
+import { UserCourseModule } from '@modules/user_course/user_course.module';
+import { CourseSubjectController } from './course_subject.controller';
+import { SupervisorCourseModule } from '@modules/supervisor_course/supervisor_course.module';
 
 @Module({
-    imports: [DatabaseModule, SharedModule, forwardRef(() => CourseModule), forwardRef(() => SubjectModule)],
+    imports: [
+        DatabaseModule,
+        SharedModule,
+        forwardRef(() => CourseModule),
+        forwardRef(() => SubjectModule),
+        UserSubjectModule,
+        UserCourseModule,
+        SupervisorCourseModule,
+    ],
     providers: [...courseSubjectProviders, CourseSubjectService],
-    controllers: [],
+    controllers: [CourseSubjectController],
     exports: [CourseSubjectService],
 })
 export class CourseSubjectModule {}

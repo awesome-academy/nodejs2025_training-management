@@ -11,7 +11,7 @@ export class VerifyProcessor extends WorkerHost {
     async process(job: Job<any>): Promise<void> {
         await this.mailService.sendMail({
             from: 'api990573@gmail.com',
-            to: 'ngothanhminhuet@gmail.com',
+            to: job.data.email,
             subject: `Verify your email`,
             text: `Please enter the code bellow here to verify your email: ${job.data.code}`,
         });
