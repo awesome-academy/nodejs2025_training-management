@@ -375,7 +375,7 @@ export class CourseService extends BaseServiceAbstract<Course> {
         if (checkCourseIdStudyByTrainee) {
             throw new UnprocessableEntityException('courses.Can not adjust this course');
         }
-        await this._checkUserPermissionForCourse(id, user);
+        await this._checkUserIsSupervisorOfCourse(id, user);
         return {
             data: await this.courseRepository.update(id, dto),
         };
@@ -392,7 +392,7 @@ export class CourseService extends BaseServiceAbstract<Course> {
             throw new UnprocessableEntityException('courses.Can not adjust this course');
         }
         const { subjectIds } = dto;
-        await this._checkUserPermissionForCourse(id, user, manager);
+        await this._checkUserIsSupervisorOfCourse(id, user, manager);
         return {
             data: await this.courseSubjectService.addSubjectCourse(id, subjectIds, manager),
         };
@@ -403,7 +403,7 @@ export class CourseService extends BaseServiceAbstract<Course> {
         if (checkCourseIdStudyByTrainee) {
             throw new UnprocessableEntityException('courses.Can not adjust this course');
         }
-        await this._checkUserPermissionForCourse(id, user);
+        await this._checkUserIsSupervisorOfCourse(id, user);
         await this.courseSubjectService.deleteByCourseId(id);
         return {
             data: await this.courseRepository.softDelete(id),
@@ -419,57 +419,48 @@ export class CourseService extends BaseServiceAbstract<Course> {
         if (checkCourseIdStudyByTrainee) {
             throw new UnprocessableEntityException('courses.Can not adjust this course');
         }
-        await this._checkUserPermissionForCourse(id, user);
+        await this._checkUserIsSupervisorOfCourse(id, user);
         await this.courseSubjectService.deleteByCourseAndSubjectId(id, subjectId);
         return {
             data: await this.courseRepository.softDelete(id),
         };
     }
 
-    private async _checkUserPermissionForCourse(courseId: string, user: User, manager?: EntityManager): Promise<void> {
-        const course = await this.courseRepository.findOneByCondition(
+    private async _checkUserIsSupervisorOfCourse(courseId: string, user: User, manager?: EntityManager): Promise<void> {
+        const supervisorCourse = await this.supervisorCourseService.findOneByCondition(
             {
-                id: courseId,
+                course: { id: courseId },
+                user: { id: user.id },
             },
-            {
-                relations: ['creator'],
-            },
+            undefined,
             manager,
         );
-        if (!course) {
-            throw new NotFoundException('course.Course not found');
-        }
-        if (user.id !== course.creator.id) {
-            throw new ForbiddenException('Forbidden Resource');
-        }
-    }
-
-    private async _checkUserIsSupervisorOfCourse(courseId: string, user: User): Promise<void> {
-        const supervisorCourse = await this.supervisorCourseService.findOneByCondition({
-            course: { id: courseId },
-            user: { id: user.id },
-        });
         if (!supervisorCourse) {
             throw new ForbiddenException('Forbidden Resource');
         }
     }
 
     async addSupervisor({ email }: EmailDto, courseId: string, user: User): Promise<AppResponse<SupervisorCourse>> {
-        const checkUserHasPermission = await this.supervisorCourseService.findOneByCondition({
-            user: { id: user.id },
-            course: { id: courseId },
-        });
-        if (!checkUserHasPermission) {
-            throw new ForbiddenException("You don't have permission to do this");
-        }
+        await this._checkUserIsSupervisorOfCourse(courseId, user);
         const newSupervisor = await this.userService.findByEmail(email);
         if (!newSupervisor || newSupervisor.role !== ERolesUser.SUPERVISOR) {
             throw new UnprocessableEntityException("courses.The supervisor's email is not valid");
         }
+        const checkSupervisorIsExsisted = await this.supervisorCourseService.findOneByCondition({
+            course: {
+                id: courseId,
+            },
+            user: {
+                id: newSupervisor.id,
+            },
+        });
+        if (checkSupervisorIsExsisted) {
+            throw new UnprocessableEntityException('courses.Supervisor is exsisted');
+        }
         return {
             data: await this.supervisorCourseService.create({
                 course: { id: courseId },
-                user: { id: user.id },
+                user: { id: newSupervisor.id },
             }),
         };
     }
