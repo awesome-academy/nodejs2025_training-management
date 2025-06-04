@@ -4,7 +4,7 @@ import { CourseSubject } from './entity/course_subject.entity';
 import { CourseSubjectRepository } from '@repositories/course_subject.repository';
 import { CourseService } from '@modules/courses/course.service';
 import { SubjectService } from '@modules/subjects/subjects.service';
-import { UpdateResult } from 'typeorm';
+import { EntityManager, UpdateResult } from 'typeorm';
 
 @Injectable()
 export class CourseSubjectService extends BaseServiceAbstract<CourseSubject> {
@@ -18,12 +18,16 @@ export class CourseSubjectService extends BaseServiceAbstract<CourseSubject> {
         super(courseSubjectRepository);
     }
 
-    async addSubjectCourse(courseId: string, subjectIds: string[]): Promise<CourseSubject[]> {
+    async addSubjectCourse(courseId: string, subjectIds: string[], manager?: EntityManager): Promise<CourseSubject[]> {
         const courseSubjects = subjectIds.map((subjectId) => {
-            return this.courseSubjectRepository.create({
-                course: { id: courseId },
-                subject: { id: subjectId },
-            });
+            return this.courseSubjectRepository.create(
+                {
+                    course: { id: courseId },
+                    subject: { id: subjectId },
+                },
+                undefined,
+                manager,
+            );
         });
         try {
             return await Promise.all(courseSubjects);

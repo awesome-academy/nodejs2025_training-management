@@ -10,6 +10,7 @@ import {
     DeleteResult,
     SelectQueryBuilder,
     FindManyOptions,
+    EntityManager,
 } from 'typeorm';
 import { BaseEntity } from '@modules/shared/base/base.entity';
 import { FindAllResponse } from 'src/types/common.type';
@@ -25,69 +26,99 @@ export abstract class BaseRepositoryAbstract<T extends BaseEntity> implements Ba
         this.repository = dataSource.getRepository(entity);
     }
 
-    async create(dto: DeepPartial<T>, options?: SaveOptions): Promise<T> {
-        const entity = this.repository.create(dto);
-        return await this.repository.save(entity, options);
+    protected getRepository(manager?: EntityManager): Repository<T> {
+        return manager ? manager.getRepository<T>(this.repository.metadata.target) : this.repository;
     }
 
-    async insert(dtos: DeepPartial<T>[]): Promise<T[]> {
-        const entities = this.repository.create(dtos);
-        return await this.repository.save(entities);
+    async create(dto: DeepPartial<T>, options?: SaveOptions, manager?: EntityManager): Promise<T> {
+        const repo = this.getRepository(manager);
+        const entity = repo.create(dto);
+        return await repo.save(entity, options);
     }
 
-    async findOneById(id: string, options?: FindOneOptions<T>): Promise<T | null> {
-        return await this.repository.findOne({
+    async insert(dtos: DeepPartial<T>[], manager?: EntityManager): Promise<T[]> {
+        const repo = this.getRepository(manager);
+        const entities = repo.create(dtos);
+        return await repo.save(entities);
+    }
+
+    async findOneById(id: string, options?: FindOneOptions<T>, manager?: EntityManager): Promise<T | null> {
+        const repo = this.getRepository(manager);
+        return await repo.findOne({
             where: { id } as FindOptionsWhere<T>,
             ...options,
         });
     }
 
-    async findOneByCondition(condition: FindOptionsWhere<T>, options?: FindOneOptions<T>): Promise<T | null> {
-        return await this.repository.findOne({ where: condition, ...options });
+    async findOneByCondition(
+        condition: FindOptionsWhere<T>,
+        options?: FindOneOptions<T>,
+        manager?: EntityManager,
+    ): Promise<T | null> {
+        const repo = this.getRepository(manager);
+        return await repo.findOne({ where: condition, ...options });
     }
 
-    async findAll(condition: FindOptionsWhere<T>, options?: FindManyOptions<T>): Promise<FindAllResponse<T>> {
-        const [items, count] = await this.repository.findAndCount({
+    async findAll(
+        condition: FindOptionsWhere<T>,
+        options?: FindManyOptions<T>,
+        manager?: EntityManager,
+    ): Promise<FindAllResponse<T>> {
+        const repo = this.getRepository(manager);
+        const [items, count] = await repo.findAndCount({
             where: condition,
             ...options,
         });
         return { count, items };
     }
 
-    async find(condition: FindOptionsWhere<T>, options?: FindOneOptions<T>): Promise<T[]> {
-        return await this.repository.find({ where: condition, ...options });
+    async find(condition: FindOptionsWhere<T>, options?: FindOneOptions<T>, manager?: EntityManager): Promise<T[]> {
+        const repo = this.getRepository(manager);
+        return await repo.find({ where: condition, ...options });
     }
 
-    async update(id: string, dto: DeepPartial<T>): Promise<UpdateResult> {
-        return await this.repository.update(id, dto as any);
+    async update(id: string, dto: DeepPartial<T>, manager?: EntityManager): Promise<UpdateResult> {
+        const repo = this.getRepository(manager);
+        return await repo.update(id, dto as any);
     }
 
-    async softDelete(id: string): Promise<UpdateResult> {
-        return await this.repository.softDelete(id);
+    async softDelete(id: string, manager?: EntityManager): Promise<UpdateResult> {
+        const repo = this.getRepository(manager);
+        return await repo.softDelete(id);
     }
 
-    async permanentlyDelete(id: string): Promise<DeleteResult> {
-        return await this.repository.delete(id);
+    async permanentlyDelete(id: string, manager?: EntityManager): Promise<DeleteResult> {
+        const repo = this.getRepository(manager);
+        return await repo.delete(id);
     }
 
-    async updateMany(filter: FindOptionsWhere<T>, dto: DeepPartial<T>): Promise<UpdateResult> {
-        return await this.repository.update(filter, dto as any);
+    async updateMany(filter: FindOptionsWhere<T>, dto: DeepPartial<T>, manager?: EntityManager): Promise<UpdateResult> {
+        const repo = this.getRepository(manager);
+        return await repo.update(filter, dto as any);
     }
 
-    async upsertDocument(filter: FindOptionsWhere<T>, dto: DeepPartial<T>, options?: SaveOptions): Promise<T> {
-        const entity = await this.repository.preload({ ...filter, ...dto });
+    async upsertDocument(
+        filter: FindOptionsWhere<T>,
+        dto: DeepPartial<T>,
+        options?: SaveOptions,
+        manager?: EntityManager,
+    ): Promise<T> {
+        const repo = this.getRepository(manager);
+        const entity = await repo.preload({ ...filter, ...dto });
         if (!entity) {
-            return await this.repository.save(dto, options);
+            return await repo.save(dto, options);
         }
-        return await this.repository.save(entity);
+        return await repo.save(entity);
     }
 
-    async softDeleteMany(filter: FindOptionsWhere<T>): Promise<UpdateResult> {
-        return await this.repository.softDelete(filter);
+    async softDeleteMany(filter: FindOptionsWhere<T>, manager?: EntityManager): Promise<UpdateResult> {
+        const repo = this.getRepository(manager);
+        return await repo.softDelete(filter);
     }
 
-    async deleteMany(filter: FindOptionsWhere<T>): Promise<DeleteResult> {
-        return await this.repository.delete(filter);
+    async deleteMany(filter: FindOptionsWhere<T>, manager?: EntityManager): Promise<DeleteResult> {
+        const repo = this.getRepository(manager);
+        return await repo.delete(filter);
     }
 
     async startTransaction() {
@@ -96,7 +127,8 @@ export abstract class BaseRepositoryAbstract<T extends BaseEntity> implements Ba
         return queryRunner;
     }
 
-    createQueryBuilder(alias: string): SelectQueryBuilder<T> {
-        return this.repository.createQueryBuilder(alias);
+    createQueryBuilder(alias: string, manager?: EntityManager): SelectQueryBuilder<T> {
+        const repo = this.getRepository(manager);
+        return repo.createQueryBuilder(alias);
     }
 }
