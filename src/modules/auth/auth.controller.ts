@@ -1,12 +1,13 @@
-import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { SignUpDto } from './dto/auth.dto';
 import { AuthService } from './auth.service';
-import { AppResponse } from 'src/types/common.type';
+import { AppResponse, ResponseMessage } from 'src/types/common.type';
 import { User } from '@modules/users/entity/user.entity';
 import { LocalAuthGuard } from './guards/local.guard';
 import { RequestWithUser } from 'src/types/requests.type';
 import { SendCodeDto, VerifyCodeDto } from './dto/verify.dto';
+import { Request } from 'express';
 
 @Controller('auth')
 @ApiTags('auths')
@@ -14,7 +15,7 @@ export class AuthController {
     constructor(private readonly authService: AuthService) {}
     @UseGuards(LocalAuthGuard)
     @Post('login')
-    async handleLogin(@Request() req: RequestWithUser): Promise<AppResponse<User>> {
+    async handleLogin(@Req() req: RequestWithUser): Promise<AppResponse<User>> {
         return await this.authService.buildLoginResponse(req);
     }
 
@@ -34,7 +35,12 @@ export class AuthController {
     }
 
     @Get('status')
-    async getAuthStatus(@Request() req: RequestWithUser): Promise<AppResponse<boolean>> {
+    async getAuthStatus(@Req() req: RequestWithUser): Promise<AppResponse<boolean>> {
         return await this.authService.checkLoginStatus(req);
+    }
+
+    @Get('logout')
+    async logout(@Req() request: Request): Promise<ResponseMessage> {
+        return await this.authService.logout(request);
     }
 }

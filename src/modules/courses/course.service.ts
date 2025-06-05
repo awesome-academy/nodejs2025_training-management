@@ -36,6 +36,8 @@ import { EUserCourseStatus } from '@modules/user_course/enum/index.enum';
 import { parseDateString } from 'src/helper/date.helper';
 import { FindMemberOfCourseDto } from './dto/findMember.dto';
 import { UserCourseResponse } from '@modules/user_course/dto/UserCourseResponse.dto';
+import { ECourseStatus } from './enum/index.enum';
+import { DeleteTraineeDto } from './dto/deleteTrainee.dto';
 
 @Injectable()
 export class CourseService extends BaseServiceAbstract<Course> {
@@ -165,6 +167,17 @@ export class CourseService extends BaseServiceAbstract<Course> {
         if (!trainee) {
             throw new NotFoundException("courses.Please enter correct the trainee's email");
         }
+        const checkTraineeHadJoinedCourse = await this.userCourseService.findOneByCondition({
+            course: {
+                id: courseId,
+            },
+            user: {
+                id: trainee.id,
+            },
+        });
+        if (checkTraineeHadJoinedCourse) {
+            throw new UnprocessableEntityException('The trainee has already joined this course.');
+        }
         const courseDetail = await this._getCourseDetail(courseId);
         const courseSubjectsDetail = await this._getSubjectsAndTaskListFromCourseDetail(courseDetail);
         for (let i = 0; i < courseSubjectsDetail.length; i++) {
@@ -236,7 +249,9 @@ export class CourseService extends BaseServiceAbstract<Course> {
             .createQueryBuilder('course')
             .innerJoinAndSelect('course.userCourses', 'userCourses')
             .innerJoinAndSelect('course.creator', 'creator')
-            .where('userCourses.userId = :userId', { userId: user.id });
+            .where('userCourses.userId = :userId', { userId: user.id })
+            .andWhere('course.status = :courseStatus', { courseStatus: ECourseStatus.ACTIVE })
+            .andWhere('userCourses.status != :status', { status: EUserCourseStatus.INACTIVE });
 
         if (name) {
             queryBuilder.andWhere('course.name ILIKE :name', {
@@ -258,7 +273,7 @@ export class CourseService extends BaseServiceAbstract<Course> {
     }
 
     async getCourseDetailForTrainee(courseId: string, user: User): Promise<AppResponse<Course>> {
-        await this._checkCourseExists(courseId);
+        await this._checkCourseExistsAndActive(courseId);
         const userIsTraineeOfCourse = await this.userCourseService.findOneByCondition({
             user: { id: user.id },
             course: { id: courseId },
@@ -425,6 +440,17 @@ export class CourseService extends BaseServiceAbstract<Course> {
         };
     }
 
+    async deleteTraineeOfCourse(
+        courseId: string,
+        { userCourseId }: DeleteTraineeDto,
+        user: User,
+    ): Promise<AppResponse<boolean>> {
+        await this._checkUserIsSupervisorOfCourse(courseId, user);
+        return {
+            data: await this.userCourseService.remove(userCourseId),
+        };
+    }
+
     private async _checkUserIsSupervisorOfCourse(courseId: string, user: User, manager?: EntityManager): Promise<void> {
         const supervisorCourse = await this.supervisorCourseService.findOneByCondition(
             {
@@ -465,21 +491,36 @@ export class CourseService extends BaseServiceAbstract<Course> {
     }
 
     private async _checkCourseIsStudyByTrainee(courseId: string, manager?: EntityManager): Promise<boolean> {
+        await this._checkCourseExists(courseId, manager);
+
         const course = await this.courseRepository.findOneByCondition(
-            { id: courseId },
+            {
+                id: courseId,
+                userCourses: {
+                    status: EUserCourseStatus.IN_PROGRESS,
+                },
+            },
             { relations: ['userCourses'] },
             manager,
         );
 
+        if (!course || course.userCourses.length === 0) return false;
+
+        return true;
+    }
+
+    private async _checkCourseExists(courseId: string, manager?: EntityManager): Promise<void> {
+        const course = await this.courseRepository.findOneById(courseId, undefined, manager);
         if (!course) {
             throw new NotFoundException('courses.Course not found');
         }
-
-        return course.userCourses.length > 0;
     }
 
-    private async _checkCourseExists(courseId: string): Promise<void> {
-        const course = await this.courseRepository.findOneById(courseId);
+    private async _checkCourseExistsAndActive(courseId: string): Promise<void> {
+        const course = await this.courseRepository.findOneByCondition({
+            id: courseId,
+            status: ECourseStatus.ACTIVE,
+        });
         if (!course) {
             throw new NotFoundException('courses.Course not found');
         }

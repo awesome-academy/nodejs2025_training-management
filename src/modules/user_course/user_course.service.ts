@@ -39,13 +39,22 @@ export class UserCourseService extends BaseServiceAbstract<UserCourse> {
         });
     }
 
-    async updateUserCourseProgress(courseId: string, userId: string, progress: number): Promise<UpdateResult> {
+    async updateUserCourseProgress(
+        courseId: string,
+        userId: string,
+        progress: number,
+        isFinish: boolean,
+    ): Promise<UpdateResult> {
         const userCourse = await this.userCourseRepository.findOneByCondition({
             course: { id: courseId },
             user: { id: userId },
         });
-        return await this.userCourseRepository.update(userCourse.id, {
+        const updatedData: any = {
             courseProgress: progress,
-        });
+        };
+        if (isFinish) {
+            updatedData.status = EUserCourseStatus.PASS;
+        }
+        return await this.userCourseRepository.update(userCourse.id, updatedData);
     }
 }

@@ -35,6 +35,7 @@ import { UserCourse } from '@modules/user_course/entity/user_course.entity';
 import { CourseWithoutCreatorDto } from './responseDto/courseResponse.dto';
 import { FindMemberOfCourseDto } from './dto/findMember.dto';
 import { UserCourseResponse } from '@modules/user_course/dto/UserCourseResponse.dto';
+import { DeleteTraineeDto } from './dto/deleteTrainee.dto';
 
 @Controller('courses')
 @ApiTags('courses')
@@ -141,6 +142,17 @@ export class CourseController {
         @CurrentUserDecorator() user: User,
     ): Promise<AppResponse<UpdateResult>> {
         return await this.courseService.deleteCourse(id, user);
+    }
+
+    @Roles(ERolesUser.SUPERVISOR)
+    @UseGuards(SessionAuthGuard, RolesGuard)
+    @Delete('trainee/:id')
+    async deleteTrainee(
+        @Param('id') id: string,
+        @Body() dto: DeleteTraineeDto,
+        @CurrentUserDecorator() user: User,
+    ): Promise<AppResponse<boolean>> {
+        return await this.courseService.deleteTraineeOfCourse(id, dto, user);
     }
 
     @Roles(ERolesUser.SUPERVISOR)

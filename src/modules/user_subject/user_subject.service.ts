@@ -77,7 +77,7 @@ export class UserSubjectService extends BaseServiceAbstract<UserSubject> {
         const courseId = userSubject.courseSubject.course.id;
         const { total, finished } = await this._countSubjects(userId, courseId);
         const progress = total > 0 ? parseFloat(((finished / total) * 100).toFixed(2)) : 0;
-        await this.userCourseService.updateUserCourseProgress(courseId, userId, progress);
+        await this.userCourseService.updateUserCourseProgress(courseId, userId, progress, total === finished);
     }
 
     private async _countSubjects(userId: string, courseId: string): Promise<{ total: number; finished: number }> {
