@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { BaseServiceAbstract } from 'src/services/base/base.abstract.service';
 import { SupervisorCourse } from './entity/supervisor_course.entity';
 import { SupervisorCourseRepository } from '@repositories/supervisor_course.repository';
@@ -25,12 +25,20 @@ export class SupervisorCourseService extends BaseServiceAbstract<SupervisorCours
     ): Promise<AppResponse<FindAllResponse<SupervisorCourseResponseDto>>> {
         const { page, pageSize, search, courseId } = dto;
         const { skip, limit } = getLimitAndSkipHelper(page, pageSize);
+        const checkUserIsSupervisorOfCourse = await this.supervisorCourseRepository.findOneByCondition({
+            course: {
+                id: courseId,
+            },
+            user: {
+                id: user.id,
+            },
+        });
+        if (!checkUserIsSupervisorOfCourse) {
+            throw new ForbiddenException('Forbidden Resource');
+        }
         const condition: any = {
             course: {
                 id: courseId,
-                creator: {
-                    id: user.id,
-                },
             },
         };
         if (search) {

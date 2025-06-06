@@ -7,14 +7,18 @@ export class CreateSubjectDto {
         required: true,
         default: 'Subject 1',
     })
-    @IsNotEmpty()
+    @IsNotEmpty({
+        message: 'courses.name is not empty',
+    })
     name: string;
 
     @ApiProperty({
         required: true,
         default: 'Description 1',
     })
-    @IsNotEmpty()
+    @IsNotEmpty({
+        message: 'courses.description is not empty',
+    })
     description: string;
 
     @ApiProperty({

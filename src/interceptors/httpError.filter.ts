@@ -9,24 +9,35 @@ export class HttpErrorFilter implements ExceptionFilter {
         const context = host.switchToHttp();
         const response = context.getResponse();
         const statusCode = exception.getStatus ? exception.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR;
-        let { message } = exception;
+        const { message } = exception;
         let error: string = exception.message;
+        let messages: string[] | string;
 
         if (exception.getResponse) {
             const eResponse = exception.getResponse() as {
                 message: string[] | string;
                 error: string;
             };
-            message = Array.isArray(eResponse.message) ? eResponse.message[0] : eResponse.message;
+            messages = eResponse.message;
             error = eResponse.error;
         }
 
-        message = message ? message : 'Maximum concurrent connections';
-        const { messageInI18, path } = this._getPathAndMessage(message);
+        messages = messages ? messages : ['Maximum concurrent connections'];
+
+        if (!Array.isArray(messages)) {
+            messages = [message];
+        }
+
+        const messageI18n = await Promise.all(
+            messages.map((mes) => {
+                const { messageInI18, path } = this._getPathAndMessage(mes);
+                return this.i18n.translate(`${path}.${messageInI18}`);
+            }),
+        );
 
         const errorResponse = {
             statusCode,
-            message: this.i18n.translate(`${path}.${messageInI18}`),
+            messages: messageI18n,
             error: error || message,
         };
 

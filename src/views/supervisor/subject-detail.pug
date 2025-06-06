@@ -109,6 +109,117 @@ block content
       100% { transform: rotate(360deg); }
     }
 
+    /* Styles cho notification */
+    .notification {
+      min-width: 300px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      animation: slideIn 0.3s ease-out;
+      background: white;
+    }
+    
+    .notification.success {
+      border-left: 4px solid #28a745;
+      background: #d4edda;
+    }
+    
+    .notification.error {
+      border-left: 4px solid #dc3545;
+      background: #f8d7da;
+    }
+    
+    .notification.warning {
+      border-left: 4px solid #ffc107;
+      background: #fff3cd;
+    }
+    
+    .notification i {
+      font-size: 1.5rem;
+      margin-right: 1rem;
+    }
+    
+    .notification.success i {
+      color: #28a745;
+    }
+    
+    .notification.error i {
+      color: #dc3545;
+    }
+    
+    .notification.warning i {
+      color: #ffc107;
+    }
+    
+    .notification-content {
+      flex-grow: 1;
+    }
+    
+    .notification-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    
+    .notification.success .notification-title {
+      color: #155724;
+    }
+    
+    .notification.error .notification-title {
+      color: #721c24;
+    }
+    
+    .notification.warning .notification-title {
+      color: #856404;
+    }
+    
+    .notification-message {
+      font-size: 0.9rem;
+    }
+    
+    .notification.success .notification-message {
+      color: #155724;
+    }
+    
+    .notification.error .notification-message {
+      color: #721c24;
+    }
+    
+    .notification.warning .notification-message {
+      color: #856404;
+    }
+    
+    .notification-close {
+      background: none;
+      border: none;
+      color: #6c757d;
+      cursor: pointer;
+      padding: 0.25rem;
+      margin-left: 1rem;
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
+      }
+      to {
+        opacity: 0;
+      }
+    }
+
   .loading-overlay
     .loading-spinner
 

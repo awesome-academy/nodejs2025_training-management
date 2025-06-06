@@ -50,6 +50,9 @@ export class SubjectService extends BaseServiceAbstract<Subject> {
         const result = await this.subjectRepository.findAll(condition, {
             skip,
             take: limit,
+            order: {
+                createdAt: 'DESC',
+            },
         });
 
         return {
@@ -97,6 +100,7 @@ export class SubjectService extends BaseServiceAbstract<Subject> {
             );
             const subjectId: string = newSubject.id;
             await this._addTaskForSubject(tasks, subjectId, transaction.manager);
+            await transaction.commitTransaction();
             return {
                 data: newSubject,
             };
@@ -117,7 +121,7 @@ export class SubjectService extends BaseServiceAbstract<Subject> {
         const subject = await this.subjectRepository.findOneByCondition({
             name: name,
         });
-        if (subject) {
+        if (subject && subjectId !== subject.id) {
             throw new UnprocessableEntityException('subjects.This subject had exsisted');
         }
         return {
@@ -139,7 +143,7 @@ export class SubjectService extends BaseServiceAbstract<Subject> {
         subjectId: string,
         manager?: EntityManager,
     ): Promise<AppResponse<Task[]>> {
-        const checkSubjectIsStudyByTrainee = await this._checkSubjectIsStudyByTrainee(subjectId);
+        const checkSubjectIsStudyByTrainee = await this._checkSubjectIsStudyByTrainee(subjectId, manager);
         if (checkSubjectIsStudyByTrainee) {
             throw new UnprocessableEntityException('subjects.Can not adujst this subject');
         }
@@ -183,10 +187,11 @@ export class SubjectService extends BaseServiceAbstract<Subject> {
         };
     }
 
-    async _checkSubjectIsStudyByTrainee(subjectId: string): Promise<boolean> {
+    async _checkSubjectIsStudyByTrainee(subjectId: string, manager?: EntityManager): Promise<boolean> {
         const subject = await this.subjectRepository.findOneByCondition(
             { id: subjectId },
             { relations: ['courseSubjects', 'courseSubjects.userSubjects'] },
+            manager,
         );
 
         if (!subject) {

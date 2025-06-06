@@ -5,5 +5,7 @@
     "Trainee had joined this course": "Trainee had joined this course",
     "Trainee is learning another course": "Trainee is learning another course",
     "Error happens when creating subject for trainee": "Error happens when creating subject for trainee",
-    "Please enter correct the trainee's email": "Please enter correct the trainee's email"
+    "Please enter correct the trainee's email": "Please enter correct the trainee's email",
+    "name is not empty": "Name is not empty",
+    "description is not empty": "Description is not empty"
 }

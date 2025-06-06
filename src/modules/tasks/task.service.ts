@@ -65,7 +65,8 @@ export class TaskService extends BaseServiceAbstract<Task> {
     }
 
     async updateTask(taskId: string, dto: UpdateTaskDto): Promise<AppResponse<UpdateResult>> {
-        if (this._checkTaskIsStudyByTrainee(taskId)) {
+        const checkTaskIsStudyByTrainee = await this._checkTaskIsStudyByTrainee(taskId);
+        if (checkTaskIsStudyByTrainee) {
             throw new UnprocessableEntityException('tasks.Another trainee is currently studying this task');
         }
         try {
@@ -78,7 +79,8 @@ export class TaskService extends BaseServiceAbstract<Task> {
     }
 
     async deleteTaskById(taskId: string, user: User): Promise<AppResponse<UpdateResult>> {
-        if (this._checkTaskIsStudyByTrainee(taskId)) {
+        const checkTaskIsStudyByTrainee = await this._checkTaskIsStudyByTrainee(taskId);
+        if (checkTaskIsStudyByTrainee) {
             throw new UnprocessableEntityException('tasks.Another trainee is currently studying this task');
         }
         const task = await this.taskRepository.findOneByCondition(
@@ -106,6 +108,7 @@ export class TaskService extends BaseServiceAbstract<Task> {
                 relations: ['userTasks'],
             },
         );
+
         return task.userTasks.length > 0;
     }
 }

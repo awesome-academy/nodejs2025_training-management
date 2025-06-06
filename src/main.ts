@@ -31,7 +31,14 @@ async function bootstrap() {
     app.use(passport.initialize());
     app.use(passport.session());
 
-    app.useGlobalPipes(new ValidationPipe());
+    app.useGlobalPipes(
+        new ValidationPipe({
+            whitelist: true,
+            forbidNonWhitelisted: true,
+            transform: true,
+            stopAtFirstError: false,
+        }),
+    );
 
     const viewsPath = join(__dirname, '..', 'src', 'views');
     app.setViewEngine('pug');
