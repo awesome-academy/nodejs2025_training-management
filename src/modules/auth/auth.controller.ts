@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { SignUpDto } from './dto/auth.dto';
 import { AuthService } from './auth.service';
@@ -31,5 +31,10 @@ export class AuthController {
     @Post('verifyCode')
     async confirmVerifyCode(@Body() dto: VerifyCodeDto): Promise<AppResponse<User>> {
         return await this.authService.verifyCode(dto);
+    }
+
+    @Get('status')
+    async getAuthStatus(@Request() req: RequestWithUser): Promise<AppResponse<boolean>> {
+        return await this.authService.checkLoginStatus(req);
     }
 }

@@ -1,0 +1,477 @@
+extends layout
+
+block content
+  .row.mb-4
+    .col-md-8
+      h1 Quản lý khóa học
+    .col-md-4.text-end
+      button.btn.btn-primary(type="button", data-bs-toggle="modal", data-bs-target="#newCourseModal")
+        i.fas.fa-plus.me-2
+        | Tạo khóa học mới
+
+  .row.mb-4
+    .col-md-12
+      .card
+        .card-body
+          form.row.g-3#searchForm
+            .col-md-5
+              input.form-control(type="text", name="name", placeholder="Tìm theo tên khóa học...")
+            .col-md-5
+              input.form-control(type="text", name="creatorName", placeholder="Tìm theo người tạo...")
+            .col-md-2
+              button.btn.btn-primary.w-100(type="submit") Tìm kiếm
+
+  // Loading overlay
+  #loadingOverlay.d-none
+    .loading-spinner
+      .spinner-border.text-primary(role="status")
+        span.visually-hidden Đang tải...
+
+  // Thêm container cho notification
+  #notificationContainer.position-fixed.top-0.end-0.p-3(style="z-index: 9999")
+
+  .row
+    .col-md-12
+      .table-responsive
+        table.table.table-hover
+          thead
+            tr
+              th Tên khóa học
+              th Mô tả
+              th Ngày bắt đầu
+              th Ngày kết thúc
+              th Trạng thái
+              th Thao tác
+          tbody#coursesTableBody
+            // Dữ liệu sẽ được thêm vào đây bằng JavaScript
+
+  // Phân trang cho danh sách khóa học
+  .d-flex.justify-content-center.mt-4
+    nav#coursesPagination(aria-label="Phân trang danh sách khóa học")
+      ul.pagination.mb-0
+
+  // Modal chỉnh sửa khóa học
+  #editCourseModal.modal.fade(tabindex="-1")
+    .modal-dialog.modal-lg
+      .modal-content
+        .modal-header
+          h5.modal-title
+            i.fas.fa-edit.me-2
+            | Chỉnh sửa khóa học
+          button.btn-close(type="button", data-bs-dismiss="modal")
+        .modal-body
+          form#editCourseForm
+            .mb-3
+              label.form-label(for="editName") Tên khóa học
+              input#editName.form-control(type="text", name="name", required)
+            
+            .mb-3
+              label.form-label(for="editDescription") Mô tả
+              textarea#editDescription.form-control(name="description", rows="3", required)
+            
+            .row.mb-3
+              .col-md-6
+                label.form-label(for="editStartDate") Ngày bắt đầu
+                input#editStartDate.form-control(type="date", name="startDate", required)
+              .col-md-6
+                label.form-label(for="editEndDate") Ngày kết thúc
+                input#editEndDate.form-control(type="date", name="endDate", required)
+            
+            .mb-3
+              label.form-label(for="editStatus") Trạng thái
+              select#editStatus.form-select(name="status", required)
+                option(value="DISABLED") Không hoạt động
+                option(value="ACTIVE") Đang hoạt động
+        .modal-footer
+          button.btn.btn-secondary(type="button", data-bs-dismiss="modal") Hủy
+          button.btn.btn-primary(type="submit", form="editCourseForm") Lưu thay đổi
+
+  // Modal tạo khóa học mới
+  #newCourseModal.modal.fade(tabindex="-1")
+    .modal-dialog.modal-lg
+      .modal-content
+        .modal-header
+          h5.modal-title
+            i.fas.fa-plus.me-2
+            | Tạo khóa học mới
+          button.btn-close(type="button", data-bs-dismiss="modal")
+        .modal-body
+          form#newCourseForm
+            .mb-3
+              label.form-label(for="courseName") Tên khóa học
+              input#courseName.form-control(type="text", name="name", required)
+            
+            .mb-3
+              label.form-label(for="courseDescription") Mô tả
+              textarea#courseDescription.form-control(name="description", rows="3", required)
+            
+            .row.mb-3
+              .col-md-6
+                label.form-label(for="startDate") Ngày bắt đầu
+                input#startDate.form-control(type="text", name="startDate", placeholder="dd/mm/yyyy", required)
+                .invalid-feedback Vui lòng nhập đúng định dạng ngày (dd/mm/yyyy)
+              .col-md-6
+                label.form-label(for="endDate") Ngày kết thúc
+                input#endDate.form-control(type="text", name="endDate", placeholder="dd/mm/yyyy", required)
+                .invalid-feedback Vui lòng nhập đúng định dạng ngày (dd/mm/yyyy)
+            
+            .mb-3
+              label.form-label(for="courseStatus") Trạng thái
+              select#courseStatus.form-select(name="status", required)
+                option(value="") Chọn trạng thái
+                option(value="DISABLED") Không hoạt động
+                option(value="ACTIVE") Đang hoạt động
+
+            .mb-3
+              label.form-label(for="subjectSearch") Tìm kiếm môn học
+              .input-group.mb-3
+                input#subjectSearch.form-control(type="text", placeholder="Nhập tên môn học...")
+                button#searchSubject.btn.btn-primary(type="button")
+                  i.fas.fa-search.me-2
+                  | Tìm kiếm
+
+            .mb-4
+              label.form-label.d-flex.justify-content-between.align-items-center
+                span Môn học đã chọn
+                span.badge.bg-primary.rounded-pill#selectedCount 0 môn học
+              #selectedSubjects.list-group.mb-3
+                // Danh sách môn học đã chọn sẽ được thêm vào đây
+
+            .mb-4
+              label.form-label Kết quả tìm kiếm
+              #subjectSearchResults.list-group.mb-3
+                // Kết quả tìm kiếm sẽ được thêm vào đây
+              
+              // Phân trang cho kết quả tìm kiếm
+              .d-flex.justify-content-center.mt-4
+                nav#subjectPagination(aria-label="Phân trang kết quả tìm kiếm")
+                  ul.pagination.mb-0
+
+        .modal-footer
+          button.btn.btn-secondary(type="button", data-bs-dismiss="modal") Hủy
+          button.btn.btn-primary(type="submit", form="newCourseForm") Tạo khóa học
+
+  style.
+    #loadingOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .loading-spinner {
+      text-align: center;
+    }
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+    }
+    .action-btn {
+      background: none;
+      border: none;
+      padding: 5px;
+      margin: 0 3px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .action-btn:hover {
+      transform: scale(1.1);
+    }
+    .action-btn i {
+      font-size: 1.2rem;
+    }
+    .btn-detail i { color: #0dcaf0; }
+    .btn-edit i { color: #0d6efd; }
+    .btn-delete i { color: #dc3545; }
+    .modal-content {
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    .modal-header {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-bottom: 2px solid #dee2e6;
+      border-radius: 15px 15px 0 0;
+      padding: 1.5rem;
+    }
+    .modal-title {
+      color: #2c3e50;
+      font-weight: 600;
+    }
+    .modal-body {
+      padding: 2rem;
+    }
+    .modal-footer {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-top: 2px solid #dee2e6;
+      border-radius: 0 0 15px 15px;
+      padding: 1.5rem;
+    }
+    .form-control, .form-select {
+      border-radius: 8px;
+      border: 1px solid #dee2e6;
+      padding: 0.75rem;
+      transition: all 0.3s ease;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+    }
+    .form-label {
+      font-weight: 500;
+      color: #2c3e50;
+      margin-bottom: 0.5rem;
+    }
+    .list-group-item {
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      border: 1px solid #dee2e6;
+      transition: all 0.3s ease;
+    }
+    .list-group-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .btn-sm {
+      padding: 0.5rem 1rem;
+    }
+    .pagination {
+      display: flex;
+      gap: 0.5rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .page-item {
+      margin: 0;
+    }
+    .page-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2.5rem;
+      height: 2.5rem;
+      padding: 0.5rem;
+      border: none;
+      border-radius: 8px;
+      color: #2c3e50;
+      font-weight: 500;
+      background: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+    .page-link:hover {
+      background: #f8f9fa;
+      color: #0d6efd;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .page-item.active .page-link {
+      background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+      color: white;
+      box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2);
+    }
+    .page-item.disabled .page-link {
+      background: #f8f9fa;
+      color: #6c757d;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+    
+    /* Styles cho notification */
+    .notification {
+      min-width: 300px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      animation: slideIn 0.3s ease-out;
+      background: white;
+    }
+    
+    .notification.success {
+      border-left: 4px solid #28a745;
+    }
+    
+    .notification.error {
+      border-left: 4px solid #dc3545;
+    }
+    
+    .notification.warning {
+      border-left: 4px solid #ffc107;
+    }
+    
+    .notification i {
+      font-size: 1.5rem;
+      margin-right: 1rem;
+    }
+    
+    .notification.success i {
+      color: #28a745;
+    }
+    
+    .notification.error i {
+      color: #dc3545;
+    }
+    
+    .notification.warning i {
+      color: #ffc107;
+    }
+    
+    .notification-content {
+      flex-grow: 1;
+    }
+    
+    .notification-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    
+    .notification-message {
+      color: #6c757d;
+      font-size: 0.9rem;
+    }
+    
+    .notification-close {
+      background: none;
+      border: none;
+      color: #6c757d;
+      cursor: pointer;
+      padding: 0.25rem;
+      margin-left: 1rem;
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
+      }
+      to {
+        opacity: 0;
+      }
+    }
+
+    /* Styles cho phần tìm kiếm môn học */
+    .input-group {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    
+    .input-group .form-control {
+      border-right: none;
+      padding: 0.8rem 1.2rem;
+      font-size: 1rem;
+    }
+    
+    .input-group .btn {
+      padding: 0.8rem 1.5rem;
+      border-left: none;
+      background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+      border: none;
+    }
+    
+    .input-group .btn:hover {
+      background: linear-gradient(135deg, #0a58ca 0%, #084298 100%);
+    }
+    
+    /* Styles cho danh sách môn học */
+    .list-group-item {
+      border: 1px solid #e9ecef;
+      margin-bottom: 0.8rem;
+      border-radius: 12px;
+      padding: 1rem;
+      background: white;
+      transition: all 0.3s ease;
+    }
+    
+    .list-group-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-color: #0d6efd;
+    }
+    
+    .list-group-item h6 {
+      color: #2c3e50;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+    }
+    
+    .list-group-item small {
+      color: #6c757d;
+      font-size: 0.85rem;
+    }
+    
+    /* Styles cho nút thêm/xóa môn học */
+    .btn-outline-primary {
+      border: 2px solid #0d6efd;
+      color: #0d6efd;
+      font-weight: 500;
+      padding: 0.5rem 1.2rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-outline-primary:hover {
+      background: #0d6efd;
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(13, 110, 253, 0.2);
+    }
+    
+    .btn-outline-danger {
+      border: 2px solid #dc3545;
+      color: #dc3545;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-outline-danger:hover {
+      background: #dc3545;
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2);
+    }
+    
+    /* Badge styles */
+    .badge {
+      padding: 0.5rem 1rem;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+    
+    .badge.bg-primary {
+      background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%) !important;
+    }
+
+block scripts
+  script(src="/js/supervisor/course.js" defer)

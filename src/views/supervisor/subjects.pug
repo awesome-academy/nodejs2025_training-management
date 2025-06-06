@@ -1,0 +1,88 @@
+extends layout
+
+block content
+  .container-fluid
+    .row.mb-4
+      .col-md-8
+        h1 Quản lý môn học
+      .col-md-4.text-end
+        button.btn.btn-primary(data-bs-toggle="modal", data-bs-target="#newSubjectModal") Tạo môn học mới
+    .row.mb-4
+      .col-12
+        .card(data-aos="fade-up")
+          .card-header.bg-transparent.border-0.d-flex.justify-content-between.align-items-center
+            h4.mb-0
+              i.fas.fa-tasks.me-2
+              | Danh sách môn học
+            .search-box
+              input.form-control(type="text", id="searchInput", placeholder="Tìm kiếm môn học...")
+          .card-body
+            .table-responsive
+              table.table.table-hover
+                thead
+                  tr
+                    th Tên môn học
+                    th Mô tả
+                    th Ngày tạo
+                    th Thao tác
+                tbody#subjectsTableBody
+
+    .row.mt-4
+      .col-12
+        nav
+          ul.pagination.justify-content-center#pagination
+
+  #newSubjectModal.modal.fade(tabindex="-1")
+    .modal-dialog.modal-lg
+      .modal-content
+        .modal-header
+          h5.modal-title Tạo môn học mới
+          button.btn-close(type="button", data-bs-dismiss="modal")
+        .modal-body
+          form#newSubjectForm
+            .mb-3
+              label.form-label(for="name") Tên môn học
+              input#name.form-control(type="text", name="name", required)
+            
+            .mb-3
+              label.form-label(for="description") Mô tả
+              textarea#description.form-control(name="description", rows="3", required)
+            
+            .mb-3
+              label.form-label Tasks
+              #tasksContainer
+                .task-item.mb-3
+                  .row
+                    .col-md-6
+                      input.form-control(type="text", name="taskTitle[]", placeholder="Tiêu đề task", required)
+                    .col-md-6
+                      input.form-control(type="text", name="taskContentFileLink[]", placeholder="Link nội dung", required)
+            
+            .mb-3
+              button.btn.btn-secondary(type="button", onclick="addTask()") Thêm task
+
+        .modal-footer
+          button.btn.btn-secondary(type="button", data-bs-dismiss="modal") Hủy
+          button.btn.btn-primary(type="submit", form="newSubjectForm") Tạo môn học
+
+  #editSubjectModal.modal.fade(tabindex="-1")
+    .modal-dialog.modal-lg
+      .modal-content
+        .modal-header
+          h5.modal-title Chỉnh sửa môn học
+          button.btn-close(type="button", data-bs-dismiss="modal")
+        .modal-body
+          form#editSubjectForm
+            .mb-3
+              label.form-label(for="editName") Tên môn học
+              input#editName.form-control(type="text", name="name", required)
+            
+            .mb-3
+              label.form-label(for="editDescription") Mô tả
+              textarea#editDescription.form-control(name="description", rows="3", required)
+
+        .modal-footer
+          button.btn.btn-secondary(type="button", data-bs-dismiss="modal") Hủy
+          button.btn.btn-primary(type="submit", form="editSubjectForm") Lưu thay đổi
+block scripts
+  script(src="/js/supervisor/subject.js" defer)

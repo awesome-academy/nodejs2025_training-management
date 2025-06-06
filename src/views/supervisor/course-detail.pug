@@ -1,0 +1,623 @@
+extends layout
+
+block content
+  // Loading overlay
+  #loadingOverlay
+    .loading-spinner
+      .spinner-border.text-primary(role="status")
+        span.visually-hidden Đang tải...
+
+  .container-fluid.py-4
+    .row
+      .col-12
+        .card.mb-4.shadow-sm
+          .card-body
+            .d-flex.justify-content-between.align-items-center.mb-4
+              h2.mb-0#courseName
+              .d-flex.align-items-center
+                span.badge.bg-primary#courseStatus.me-3
+            .row
+              .col-md-8
+                .mb-4
+                  h5 Mô tả
+                  p#courseDescription
+                .row.mb-4
+                  .col-md-6
+                    h5 Ngày bắt đầu
+                    p#courseStartDate
+                  .col-md-6
+                    h5 Ngày kết thúc
+                    p#courseEndDate
+              .col-md-4
+                img#courseImage.img-fluid.rounded.shadow-sm(src="", alt="Course Image")
+
+    .row.mt-4
+      .col-12
+        .card.shadow-sm
+          .card-header.bg-white
+            ul.nav.nav-tabs.card-header-tabs(role="tablist")
+              li.nav-item(role="presentation")
+                button.nav-link.active#subjects-tab(data-bs-toggle="tab" data-bs-target="#subjects" type="button" role="tab" aria-controls="subjects" aria-selected="true")
+                  i.fas.fa-book-open.me-2
+                  span.text-dark Môn học
+              li.nav-item(role="presentation")
+                button.nav-link#members-tab(data-bs-toggle="tab" data-bs-target="#members" type="button" role="tab" aria-controls="members" aria-selected="false")
+                  i.fas.fa-users.me-2
+                  span.text-dark Thành viên
+              li.nav-item(role="presentation")
+                button.nav-link#supervisors-tab(data-bs-toggle="tab" data-bs-target="#supervisors" type="button" role="tab" aria-controls="supervisors" aria-selected="false")
+                  i.fas.fa-user-shield.me-2
+                  span.text-dark Người giám sát
+          .card-body
+            .tab-content
+              #subjects.tab-pane.fade.show.active(role="tabpanel" aria-labelledby="subjects-tab")
+                .d-flex.justify-content-between.align-items-center.mb-4
+                  h3.mb-0
+                    i.fas.fa-book-open.me-2
+                    | Danh sách môn học
+                  .header-actions
+                    button.btn.btn-primary.btn-sm(data-bs-toggle="modal" data-bs-target="#addSubjectModal")
+                      i.fas.fa-plus.me-2
+                      | Thêm môn học
+                .row#subjectsList
+                  // Dữ liệu môn học sẽ được thêm vào đây
+
+              #members.tab-pane.fade(role="tabpanel" aria-labelledby="members-tab")
+                .d-flex.justify-content-between.align-items-center.mb-4
+                  h3.mb-0
+                    i.fas.fa-users.me-2
+                    | Danh sách thành viên
+                  .header-actions
+                    .d-flex.gap-2
+                      button.btn.btn-primary.btn-sm(data-bs-toggle="modal" data-bs-target="#addMemberModal")
+                        <i class="fas fa-user-plus me-2"></i>
+                        | Thêm thành viên
+                      .input-group
+                        input#memberSearch.form-control(type="text" placeholder="Tìm kiếm thành viên...")
+                        button#searchMember.btn.btn-primary(type="button")
+                          i.fas.fa-search.me-2
+                          | Tìm kiếm
+                .table-responsive
+                  table.table.table-hover
+                    thead
+                      tr
+                        th STT
+                        th Tên thành viên
+                        th Tiến độ
+                        th Ngày đăng ký
+                        th Trạng thái
+                    tbody#membersList
+                      // Dữ liệu thành viên sẽ được thêm vào đây
+                #memberPagination.d-flex.justify-content-center.mt-4
+                  // Phân trang sẽ được thêm vào đây
+
+              #supervisors.tab-pane.fade(role="tabpanel" aria-labelledby="supervisors-tab")
+                .d-flex.justify-content-between.align-items-center.mb-4
+                  h3.mb-0
+                    i.fas.fa-user-shield.me-2
+                    | Danh sách người giám sát
+                  .header-actions
+                    .d-flex.gap-2
+                      button.btn.btn-primary.btn-sm(data-bs-toggle="modal" data-bs-target="#addSupervisorModal")
+                        i.fas.fa-user-plus.me-2
+                        | Thêm người giám sát
+                      .input-group
+                        input#supervisorSearch.form-control(type="text" placeholder="Tìm kiếm người giám sát...")
+                        button#searchSupervisor.btn.btn-primary(type="button")
+                          i.fas.fa-search.me-2
+                          | Tìm kiếm
+                .table-responsive
+                  table.table.table-hover
+                    thead
+                      tr
+                        th STT
+                        th Tên người giám sát
+                        th Email
+                        th Trạng thái
+                        th Thao tác
+                    tbody#supervisorsList
+                      // Dữ liệu người giám sát sẽ được thêm vào đây
+                #supervisorPagination.d-flex.justify-content-center.mt-4
+                  // Phân trang sẽ được thêm vào đây
+
+  // Toast container
+  .toast-container.position-fixed.top-0.end-0.p-3
+    #notificationToast.toast(role="alert" aria-live="assertive" aria-atomic="true")
+      .toast-header
+        i.fas.fa-info-circle.me-2
+        strong.me-auto#toastTitle Thông báo
+        button.btn-close(type="button" data-bs-dismiss="toast" aria-label="Close")
+      .toast-body#toastMessage
+
+  // Modal chỉnh sửa khóa học
+  #editCourseModal.modal.fade(tabindex="-1")
+    .modal-dialog.modal-lg
+      .modal-content
+        .modal-header
+          h5.modal-title
+            i.fas.fa-edit.me-2
+            | Chỉnh sửa khóa học
+          button.btn-close(type="button" data-bs-dismiss="modal")
+        .modal-body
+          form#editCourseForm
+            .mb-3
+              label.form-label(for="editName") Tên khóa học
+              input#editName.form-control(type="text" name="name" required)
+            .mb-3
+              label.form-label(for="editDescription") Mô tả
+              textarea#editDescription.form-control(name="description" rows="3" required)
+            .row.mb-3
+              .col-md-6
+                label.form-label(for="editStartDate") Ngày bắt đầu
+                input#editStartDate.form-control(type="date" name="startDate" required)
+              .col-md-6
+                label.form-label(for="editEndDate") Ngày kết thúc
+                input#editEndDate.form-control(type="date" name="endDate" required)
+            .mb-3
+              label.form-label(for="editStatus") Trạng thái
+              select#editStatus.form-select(name="status" required)
+                option(value="DISABLED") Không hoạt động
+                option(value="ACTIVE") Đang hoạt động
+        .modal-footer
+          button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Hủy
+          button.btn.btn-primary(type="submit") Lưu thay đổi
+
+  // Modal thêm môn học
+  #addSubjectModal.modal.fade(tabindex="-1")
+    .modal-dialog.modal-lg
+      .modal-content
+        .modal-header.bg-primary.text-white
+          h5.modal-title
+            i.fas.fa-book-medical.me-2
+            | Thêm môn học
+          button.btn-close.btn-close-white(type="button" data-bs-dismiss="modal")
+        .modal-body
+          .mb-4
+            .input-group.input-group-lg
+              input#subjectSearch.form-control(type="text" placeholder="Nhập tên môn học để tìm kiếm...")
+              button#searchSubject.btn.btn-primary(type="button")
+                i.fas.fa-search.me-2
+                | Tìm kiếm
+          .mb-4
+            .d-flex.align-items-center.mb-2
+              i.fas.fa-check-circle.text-success.me-2
+              h6.mb-0 Đã chọn: 
+                span#selectedCount.badge.bg-success.ms-2 0 môn học
+            #selectedSubjects.list-group.mb-3
+          .mb-4
+            .d-flex.align-items-center.mb-2
+              i.fas.fa-search.text-primary.me-2
+              h6.mb-0 Kết quả tìm kiếm:
+            #subjectSearchResults.list-group.mb-3
+            #subjectPagination.d-flex.justify-content-center
+        .modal-footer.bg-light
+          button.btn.btn-secondary(type="button" data-bs-dismiss="modal")
+            i.fas.fa-times.me-2
+            | Hủy
+          button#addSubjectsBtn.btn.btn-primary(type="button")
+            i.fas.fa-plus.me-2
+            | Thêm môn học
+
+  // Modal thêm thành viên
+  #addMemberModal.modal.fade(tabindex="-1")
+    .modal-dialog
+      .modal-content
+        .modal-header
+          h5.modal-title
+            i.fas.fa-user-plus.me-2
+            | Thêm thành viên
+          button.btn-close(type="button" data-bs-dismiss="modal")
+        .modal-body
+          form#addMemberForm
+            .mb-3
+              label.form-label(for="memberEmails") Email thành viên
+              textarea#memberEmails.form-control(
+                rows="5" 
+                placeholder="Nhập email thành viên, mỗi email một dòng"
+                required
+              )
+              .form-text.text-muted
+                | Nhập email của thành viên cần thêm, mỗi email một dòng
+        .modal-footer
+          button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Hủy
+          button.btn.btn-primary(type="submit", form="addMemberForm") Thêm thành viên
+
+  // Modal thêm người giám sát
+  #addSupervisorModal.modal.fade(tabindex="-1")
+    .modal-dialog
+      .modal-content
+        .modal-header
+          h5.modal-title
+            i.fas.fa-user-shield.me-2
+            | Thêm người giám sát
+          button.btn-close(type="button" data-bs-dismiss="modal")
+        .modal-body
+          form#addSupervisorForm
+            .mb-3
+              label.form-label(for="supervisorEmail") Email người giám sát
+              input#supervisorEmail.form-control(
+                type="email"
+                placeholder="Nhập email người giám sát"
+                required
+              )
+              .form-text.text-muted
+                | Nhập email của người giám sát cần thêm
+        .modal-footer
+          button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Hủy
+          button.btn.btn-primary(type="submit", form="addSupervisorForm") Thêm người giám sát
+
+  style.
+    #loadingOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .loading-spinner {
+      text-align: center;
+    }
+    .spinner-border {
+      width: 3rem;
+      height: 3rem;
+    }
+    .card {
+      transition: all 0.3s ease;
+      border: none;
+      border-radius: 15px;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    .card-header {
+      border-bottom: 2px solid #f8f9fa;
+      border-radius: 15px 15px 0 0 !important;
+    }
+    .subject-card {
+      border: none;
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      background: white;
+      transition: all 0.3s ease;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      cursor: pointer;
+    }
+    .subject-card:hover {
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      transform: translateY(-3px);
+    }
+    .subject-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #f8f9fa;
+    }
+    .subject-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin: 0;
+    }
+    .subject-description {
+      color: #6c757d;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+    .tasks-section {
+      margin-top: 1.5rem;
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .tasks-section.show {
+      max-height: 1000px;
+    }
+    .tasks-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .tasks-header i {
+      color: #0d6efd;
+      margin-right: 0.5rem;
+      transition: transform 0.3s ease;
+    }
+    .subject-card.expanded .tasks-header i {
+      transform: rotate(180deg);
+    }
+    .task-item {
+      padding: 1rem;
+      margin: 0.75rem 0;
+      border-radius: 10px;
+      background: #f8f9fa;
+      transition: all 0.3s ease;
+      border: 1px solid #e9ecef;
+    }
+    .task-item:hover {
+      background: #e9ecef;
+      transform: translateX(5px);
+      border-color: #0d6efd;
+    }
+    .task-title {
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 0.5rem;
+    }
+    .task-link {
+      display: inline-flex;
+      align-items: center;
+      color: #0d6efd;
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+    .task-link:hover {
+      color: #0a58ca;
+    }
+    .task-link i {
+      margin-right: 0.5rem;
+    }
+    .badge {
+      font-size: 0.875rem;
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+    }
+    #courseImage {
+      max-height: 300px;
+      object-fit: cover;
+      width: 100%;
+      border-radius: 15px;
+    }
+    .no-tasks {
+      text-align: center;
+      padding: 2rem;
+      background: #f8f9fa;
+      border-radius: 10px;
+      color: #6c757d;
+    }
+    .no-tasks i {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+      color: #dee2e6;
+    }
+    .modal-content {
+      border: none;
+      border-radius: 15px;
+    }
+    .modal-header {
+      border-bottom: 2px solid #f8f9fa;
+      border-radius: 15px 15px 0 0;
+    }
+    .modal-footer {
+      border-top: 2px solid #f8f9fa;
+      border-radius: 0 0 15px 15px;
+    }
+    .form-control, .form-select {
+      border-radius: 8px;
+      border: 1px solid #dee2e6;
+      padding: 0.75rem;
+      transition: all 0.3s ease;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .form-label {
+      font-weight: 500;
+      color: #2c3e50;
+    }
+    .form-check-input {
+      width: 3em;
+      height: 1.5em;
+      margin-top: 0.25em;
+      vertical-align: top;
+      background-color: #fff;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
+      border: 1px solid rgba(0, 0, 0, 0.25);
+      appearance: none;
+      color-adjust: exact;
+      print-color-adjust: exact;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .form-check-input:checked {
+      background-color: #198754;
+      border-color: #198754;
+      box-shadow: 0 0 10px rgba(25, 135, 84, 0.5);
+    }
+    .form-check-input:disabled {
+      opacity: 1;
+      cursor: not-allowed;
+    }
+    .form-check-input:checked:disabled {
+      background-color: #198754;
+      border-color: #198754;
+      box-shadow: 0 0 15px rgba(25, 135, 84, 0.7);
+    }
+    .form-check-label {
+      margin-left: 0.5rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    .form-check-input:checked + .form-check-label {
+      color: #198754;
+      font-weight: 600;
+    }
+
+    /* Toast styles */
+    .toast-container {
+      z-index: 9999;
+    }
+    .toast {
+      background: white;
+      border: none;
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+      border-radius: 15px;
+      transform: translateX(100%);
+      transition: transform 0.3s ease-in-out;
+    }
+    .toast.show {
+      transform: translateX(0);
+    }
+    .toast-header {
+      border-bottom: 2px solid #f8f9fa;
+      border-radius: 15px 15px 0 0;
+      padding: 1rem;
+    }
+    .toast-body {
+      padding: 1rem;
+      font-size: 0.95rem;
+    }
+    .toast.success .toast-header {
+      background-color: #198754;
+      color: white;
+    }
+    .toast.error .toast-header {
+      background-color: #dc3545;
+      color: white;
+    }
+    .toast.warning .toast-header {
+      background-color: #ffc107;
+      color: #000;
+    }
+    .toast.info .toast-header {
+      background-color: #0dcaf0;
+      color: white;
+    }
+    .toast.success .toast-body {
+      border-left: 4px solid #198754;
+    }
+    .toast.error .toast-body {
+      border-left: 4px solid #dc3545;
+    }
+    .toast.warning .toast-body {
+      border-left: 4px solid #ffc107;
+    }
+    .toast.info .toast-body {
+      border-left: 4px solid #0dcaf0;
+    }
+
+    /* Modal styles */
+    .modal-content {
+      border: none;
+      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    .modal-header {
+      padding: 1.5rem;
+    }
+    .modal-body {
+      padding: 2rem;
+    }
+    .modal-footer {
+      padding: 1.5rem;
+    }
+    .input-group-lg > .form-control {
+      padding: 1rem 1.25rem;
+      font-size: 1.1rem;
+    }
+    .list-group-item {
+      border: 1px solid #e9ecef;
+      margin-bottom: 0.5rem;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+    .list-group-item:hover {
+      transform: translateX(5px);
+      border-color: #0d6efd;
+      box-shadow: 0 0.125rem 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .badge {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    .pagination {
+      margin-top: 1.5rem;
+    }
+    .page-link {
+      padding: 0.75rem 1rem;
+      margin: 0 0.25rem;
+      border-radius: 8px;
+      border: none;
+      color: #0d6efd;
+      transition: all 0.3s ease;
+    }
+    .page-link:hover {
+      background-color: #e9ecef;
+      transform: translateY(-2px);
+    }
+    .page-item.active .page-link {
+      background-color: #0d6efd;
+      color: white;
+      box-shadow: 0 0.125rem 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    /* Tab styles */
+    .nav-tabs {
+      border-bottom: 2px solid #f8f9fa;
+    }
+    .nav-tabs .nav-link {
+      border: none;
+      color: #333;
+      padding: 1rem 1.5rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+    }
+    .nav-tabs .nav-link i {
+      margin-right: 0.5rem;
+    }
+    .nav-tabs .nav-link:hover {
+      color: #0d6efd;
+      border: none;
+    }
+    .nav-tabs .nav-link.active {
+      color: #0d6efd;
+      border: none;
+      border-bottom: 2px solid #0d6efd;
+      background: none;
+    }
+    .nav-tabs .nav-link span {
+      color: #333;
+    }
+    .nav-tabs .nav-link.active span {
+      color: #0d6efd;
+    }
+    .tab-content {
+      padding: 1.5rem 0;
+    }
+    
+    /* Table styles */
+    .table {
+      margin-bottom: 0;
+    }
+    .table th {
+      font-weight: 600;
+      color: #2c3e50;
+      border-top: none;
+    }
+    .table td {
+      vertical-align: middle;
+    }
+    .progress {
+      height: 0.5rem;
+      border-radius: 1rem;
+    }
+    .badge {
+      padding: 0.5rem 1rem;
+      font-weight: 500;
+    }
+
+block scripts
+  script(src="/js/supervisor/course-detail.js" defer)

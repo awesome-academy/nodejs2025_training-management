@@ -1,0 +1,190 @@
+extends ./layouts/auth-layout
+
+block styles
+  style.
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .auth-container {
+      max-width: 450px;
+      width: 100%;
+      margin: 2rem;
+      padding: 2.5rem;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      animation: fadeIn 0.5s ease;
+    }
+    .auth-title {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      color: #2d3748;
+      font-size: 2rem;
+      font-weight: 600;
+    }
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .form-group label {
+      font-weight: 500;
+      color: #4a5568;
+      font-size: 0.95rem;
+    }
+    .form-group input {
+      padding: 0.875rem 1rem;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      background: rgba(255, 255, 255, 0.9);
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+      background: white;
+    }
+    .auth-button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 0.5rem;
+    }
+    .auth-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    .auth-button:active {
+      transform: translateY(0);
+    }
+    .auth-switch {
+      text-align: center;
+      margin-top: 2rem;
+      color: #4a5568;
+      font-size: 0.95rem;
+    }
+    .auth-switch a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+    .auth-switch a:hover {
+      color: #764ba2;
+    }
+    .notifications-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1000;
+    }
+    .notification {
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      min-width: 300px;
+    }
+    .notification.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .notification.success {
+      background: #48bb78;
+      color: white;
+    }
+    .notification.error {
+      background: #f56565;
+      color: white;
+    }
+    .form-group input::placeholder {
+      color: #a0aec0;
+    }
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    @keyframes slideOut {
+      from {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      to {
+        opacity: 0;
+        transform: translateX(100%);
+      }
+    }
+    .page-transition {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      z-index: 9999;
+      transform: translateX(100%);
+      transition: transform 0.5s ease;
+    }
+    .page-transition.active {
+      transform: translateX(0);
+    }
+
+block content
+  .page-transition#pageTransition
+  .notifications-container#notificationsContainer
+  .auth-container
+    h2.auth-title= isLogin ? 'Đăng nhập' : 'Đăng ký'
+    
+    form.auth-form#authForm
+      if !isLogin
+        .form-group
+          label(for="name") Họ và tên
+          input#name(type="text", name="name", required, placeholder="Nhập họ và tên của bạn")
+      
+      .form-group
+        label(for="email") Email
+        input#email(type="email", name="email", required, placeholder="Nhập email của bạn")
+      
+      .form-group
+        label(for="password") Mật khẩu
+        input#password(type="password", name="password", required, placeholder="Nhập mật khẩu của bạn")
+      
+      button.auth-button(type="submit")= isLogin ? 'Đăng nhập' : 'Đăng ký'
+    
+    .auth-switch
+      if isLogin
+        p Chưa có tài khoản? 
+          a(href="/views/auth?mode=register", onclick="handlePageTransition(event)") Đăng ký ngay
+      else
+        p Đã có tài khoản? 
+          a(href="/views/auth?mode=login", onclick="handlePageTransition(event)") Đăng nhập
+
+block scripts
+  script(src="/js/trainee/auth.js" defer)

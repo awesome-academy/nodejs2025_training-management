@@ -1,16 +1,20 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import * as session from 'express-session';
 import * as passport from 'passport';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
     const configService = app.get(ConfigService);
     const sessionSecret = configService.get<string>('SESSION_SECRET');
+
+    app.useStaticAssets(join(__dirname, '..', 'public'));
 
     app.use(
         session({
@@ -29,24 +33,20 @@ async function bootstrap() {
 
     app.useGlobalPipes(new ValidationPipe());
 
+    const viewsPath = join(__dirname, '..', 'src', 'views');
+    app.setViewEngine('pug');
+    app.setBaseViewsDir(viewsPath);
+
     const config = new DocumentBuilder()
-        .setTitle('Users API')
-        .setDescription('The users API description')
-        .addTag('auth', 'Authentication related endpoints')
-        .addTag('users', 'User management endpoints')
+        .setTitle('Training System API')
+        .setDescription('API documentation for Training System')
         .setVersion('1.0')
-        .addBearerAuth(
-            {
-                type: 'http',
-                scheme: 'bearer',
-                bearerFormat: 'JWT',
-                description: 'Enter your JWT token',
-            },
-            'token',
-        )
+        .addBearerAuth()
         .build();
     const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('api', app, document);
+
+    app.enableCors();
 
     await app.listen(3000);
 }

@@ -1,0 +1,703 @@
+extends ./layouts/layout
+
+block styles
+  style.
+    .course-detail-section {
+      padding: 2rem;
+      background: #f8f9fa;
+      min-height: 100vh;
+    }
+
+    .course-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 2rem;
+    }
+
+    .course-sidebar {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      height: fit-content;
+      position: sticky;
+      top: 2rem;
+    }
+
+    .course-content {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      padding: 2rem;
+    }
+
+    .course-header {
+      position: relative;
+      margin: -2rem -2rem 2rem -2rem;
+      border-radius: 12px 12px 0 0;
+      overflow: hidden;
+    }
+
+    .course-image {
+      width: 100%;
+      height: 300px;
+      object-fit: cover;
+    }
+
+    .course-image-placeholder {
+      width: 100%;
+      height: 300px;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #718096;
+      font-size: 1.25rem;
+    }
+
+    .course-title {
+      font-size: 2rem;
+      color: #2d3748;
+      margin-bottom: 1rem;
+    }
+
+    .course-meta {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .course-tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #edf2f7;
+      padding-bottom: 0.5rem;
+    }
+
+    .course-tab {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 500;
+      color: #718096;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .course-tab::before {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, #4a90e2, #764ba2);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    .course-tab:hover {
+      color: #4a90e2;
+      background: rgba(74, 144, 226, 0.1);
+    }
+
+    .course-tab.active {
+      color: #4a90e2;
+      background: rgba(74, 144, 226, 0.1);
+    }
+
+    .course-tab.active::before {
+      transform: scaleX(1);
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .members-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .member-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .member-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(to bottom, #4a90e2, #764ba2);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .member-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .member-card:hover::before {
+      opacity: 1;
+    }
+
+    .member-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(45deg, #4a90e2, #764ba2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.5rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .member-info {
+      flex: 1;
+    }
+
+    .member-name {
+      font-weight: 600;
+      color: #2d3748;
+      margin: 0 0 0.25rem 0;
+      font-size: 1.1rem;
+    }
+
+    .member-role {
+      font-size: 0.875rem;
+      color: #718096;
+      margin: 0;
+    }
+
+    .member-status {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #48bb78;
+    }
+
+    .member-status.offline {
+      background: #a0aec0;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #718096;
+    }
+
+    .meta-item i {
+      color: #4a90e2;
+    }
+
+    .course-description {
+      color: #4a5568;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    .subject-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .subject-item {
+      border-bottom: 1px solid #edf2f7;
+    }
+
+    .subject-item:last-child {
+      border-bottom: none;
+    }
+
+    .subject-header {
+      padding: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background-color 0.3s ease;
+      position: relative;
+    }
+
+    .subject-header:hover {
+      background-color: #f7fafc;
+    }
+
+    .subject-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    .subject-checkbox {
+      width: 24px;
+      height: 24px;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+      background: white;
+    }
+
+    .subject-checkbox:hover {
+      border-color: #4a90e2;
+      background: rgba(74, 144, 226, 0.1);
+    }
+
+    .subject-checkbox.completed {
+      background-color: #48bb78;
+      border-color: #48bb78;
+    }
+
+    .subject-checkbox.completed::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .subject-checkbox.loading {
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .subject-checkbox.loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 16px;
+      height: 16px;
+      margin: -8px 0 0 -8px;
+      border: 2px solid #e2e8f0;
+      border-top-color: #4a90e2;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    .subject-title {
+      font-weight: 500;
+      color: #2d3748;
+      margin: 0;
+      flex: 1;
+      font-size: 0.95rem;
+    }
+
+    .subject-arrow {
+      color: #4a90e2;
+      transition: transform 0.3s ease;
+      margin-left: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .subject-content.active + .subject-header .subject-arrow {
+      transform: rotate(180deg);
+    }
+
+    .subject-status {
+      font-size: 0.875rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      margin-left: 1rem;
+      color: #fff;
+    }
+
+    .subject-content {
+      padding: 0 1rem 1rem 1rem;
+      display: none;
+    }
+
+    .subject-content.active {
+      display: block;
+      animation: slideDown 0.3s ease;
+    }
+
+    .task-list {
+      list-style: none;
+      padding: 0;
+      margin: 0.5rem 0 0 0;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 0.25rem 0;
+    }
+
+    .task-item:hover {
+      background-color: #f7fafc;
+    }
+
+    .task-item.active {
+      background-color: #ebf8ff;
+      border-left: 3px solid #4a90e2;
+    }
+
+    .task-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #e2e8f0;
+      border-radius: 50%;
+      margin-right: 1rem;
+      position: relative;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+    }
+
+    .task-checkbox.completed {
+      background-color: #48bb78;
+      border-color: #48bb78;
+    }
+
+    .task-checkbox.completed::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 12px;
+    }
+
+    .task-content {
+      flex: 1;
+    }
+
+    .task-title {
+      font-weight: 500;
+      color: #2d3748;
+      margin: 0;
+      font-size: 0.9rem;
+    }
+
+    .task-description {
+      font-size: 0.8rem;
+      color: #718096;
+      margin: 0.25rem 0 0 0;
+    }
+
+    .video-container {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 Aspect Ratio */
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .video-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .video-loading {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.25rem;
+    }
+
+    .video-loading i {
+      animation: spin 1s linear infinite;
+    }
+
+    .task-navigation {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #edf2f7;
+    }
+
+    .nav-button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .nav-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .prev-button {
+      background-color: #edf2f7;
+      color: #4a5568;
+    }
+
+    .prev-button:hover:not(:disabled) {
+      background-color: #e2e8f0;
+    }
+
+    .next-button {
+      background-color: #4a90e2;
+      color: white;
+    }
+
+    .next-button:hover:not(:disabled) {
+      background-color: #357abd;
+    }
+
+    .complete-button {
+      background-color: #48bb78;
+      color: white;
+      margin-left: auto;
+    }
+
+    .complete-button:hover:not(:disabled) {
+      background-color: #38a169;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Loading Animation */
+    .loading-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      backdrop-filter: blur(8px);
+    }
+
+    .loading-content {
+      text-align: center;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .loading-spinner {
+      width: 80px;
+      height: 80px;
+      position: relative;
+      margin: 0 auto 1.5rem;
+    }
+
+    .loading-spinner::before,
+    .loading-spinner::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 4px solid transparent;
+      border-top-color: #4a90e2;
+      animation: spin 1s linear infinite;
+    }
+
+    .loading-spinner::before {
+      z-index: 1;
+      animation: spin 1s linear infinite;
+    }
+
+    .loading-spinner::after {
+      border: 4px solid transparent;
+      border-top-color: #764ba2;
+      animation: spin 2s linear infinite;
+    }
+
+    .loading-text {
+      font-size: 1.25rem;
+      color: #2d3748;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .loading-subtext {
+      font-size: 0.875rem;
+      color: #718096;
+    }
+
+    @media (max-width: 1024px) {
+      .course-container {
+        grid-template-columns: 1fr;
+      }
+
+      .course-sidebar {
+        position: static;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .course-detail-section {
+        padding: 1rem;
+      }
+
+      .course-header {
+        margin: -1rem -1rem 1rem -1rem;
+      }
+
+      .course-image,
+      .course-image-placeholder {
+        height: 200px;
+      }
+
+      .course-title {
+        font-size: 1.5rem;
+      }
+
+      .course-meta {
+        gap: 1rem;
+      }
+
+      .course-tabs {
+        flex-wrap: wrap;
+      }
+
+      .course-tab {
+        flex: 1;
+        text-align: center;
+        padding: 0.5rem 1rem;
+      }
+
+      .members-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+block content
+  section.course-detail-section
+    #loadingContainer.loading-container
+      .loading-content
+        .loading-spinner
+        .loading-text Đang tải thông tin khóa học
+        .loading-subtext Vui lòng chờ trong giây lát
+          span.loading-dots
+
+    .course-container
+      .course-sidebar
+        .subject-list#subjectList
+          // Subjects will be loaded here
+
+      .course-content
+        .course-header
+          #courseImage.course-image-placeholder
+            i.fas.fa-book-open.fa-3x
+            div Đang tải ảnh khóa học...
+        
+        h1#courseTitle.course-title Đang tải...
+        
+        .course-meta
+          .meta-item
+            i.fas.fa-calendar-alt
+            span#courseDate Đang tải...
+          .meta-item
+            i.fas.fa-clock
+            span#courseStatus Đang tải...
+        
+        .course-tabs
+          .course-tab.active(data-tab="content")
+            i.fas.fa-book-open.mr-2
+            span Nội dung khóa học
+          .course-tab(data-tab="members")
+            i.fas.fa-users.mr-2
+            span Thành viên
+        
+        .tab-content.active#contentTab
+          p#courseDescription.course-description Đang tải mô tả khóa học...
+          
+          #videoContainer.video-container
+            .video-loading
+              i.fas.fa-spinner
+              span   Đang tải video...
+          
+          #taskContent
+            h2#taskTitle.course-title Đang tải...
+          
+          .task-navigation
+            button#prevButton.nav-button.prev-button(disabled)
+              i.fas.fa-arrow-left
+              span Bài trước
+            button#nextButton.nav-button.next-button(disabled)
+              span Bài tiếp theo
+              i.fas.fa-arrow-right
+            button#completeButton.nav-button.complete-button(disabled)
+              i.fas.fa-check
+              span Hoàn thành
+
+        .tab-content#membersTab
+          .members-grid
+            // Members will be loaded here dynamically
+
+block scripts
+  script(src="/js/trainee/course-detail.js" defer)

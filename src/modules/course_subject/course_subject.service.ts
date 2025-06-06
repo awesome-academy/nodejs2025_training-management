@@ -58,8 +58,9 @@ export class CourseSubjectService extends BaseServiceAbstract<CourseSubject> {
         const finishSubjectForTrainees = courseSubject.userSubjects.map((userSubject) =>
             this.userSubjectService.finishSubjectForTrainee(userSubject.id, userSubject.user),
         );
+
         try {
-            Promise.all(finishSubjectForTrainees);
+            await Promise.all(finishSubjectForTrainees);
             return {
                 data: await this.courseSubjectRepository.update(courseSubjectId, {
                     status: ECourseSubjectStatus.FINISH,

@@ -13,7 +13,7 @@ import { CreateSubjectDto, TaskDto } from './dto/createSubject.dto';
 import { UsersService } from '@modules/users/user.services';
 import { TaskService } from '@modules/tasks/task.service';
 import { Task } from '@modules/tasks/entity/task.entity';
-import { ILike, UpdateResult } from 'typeorm';
+import { EntityManager, ILike, UpdateResult } from 'typeorm';
 import { UpdateSubjectDto, UpdateSubjectTask } from './dto/updateSubject.dto';
 import { User } from '@modules/users/entity/user.entity';
 import { AppResponse, FindAllResponse } from 'src/types/common.type';
@@ -84,16 +84,28 @@ export class SubjectService extends BaseServiceAbstract<Subject> {
         if (subject) {
             throw new UnprocessableEntityException('subjects.This subject had exsisted');
         }
-        const newSubject = await this.subjectRepository.create({
-            name,
-            description,
-            creator: user,
-        });
-        const subjectId: string = newSubject.id;
-        await this._addTaskForSubject(tasks, subjectId);
-        return {
-            data: newSubject,
-        };
+        const transaction = await this.subjectRepository.startTransaction();
+        try {
+            const newSubject = await this.subjectRepository.create(
+                {
+                    name,
+                    description,
+                    creator: user,
+                },
+                undefined,
+                transaction.manager,
+            );
+            const subjectId: string = newSubject.id;
+            await this._addTaskForSubject(tasks, subjectId, transaction.manager);
+            return {
+                data: newSubject,
+            };
+        } catch (error) {
+            await transaction.rollbackTransaction();
+            throw new UnprocessableEntityException(error);
+        } finally {
+            await transaction.release();
+        }
     }
 
     async updateSubjectInfo(subjectId: string, dto: UpdateSubjectDto): Promise<AppResponse<UpdateResult>> {
@@ -122,7 +134,11 @@ export class SubjectService extends BaseServiceAbstract<Subject> {
         return await this._addTaskForSubject(tasks, subjectId);
     }
 
-    async _addTaskForSubject(tasks: TaskDto[], subjectId: string): Promise<AppResponse<Task[]>> {
+    async _addTaskForSubject(
+        tasks: TaskDto[],
+        subjectId: string,
+        manager?: EntityManager,
+    ): Promise<AppResponse<Task[]>> {
         const checkSubjectIsStudyByTrainee = await this._checkSubjectIsStudyByTrainee(subjectId);
         if (checkSubjectIsStudyByTrainee) {
             throw new UnprocessableEntityException('subjects.Can not adujst this subject');
@@ -131,11 +147,14 @@ export class SubjectService extends BaseServiceAbstract<Subject> {
             throw new UnprocessableEntityException('subjects.At least one task is required');
         }
         const tasksData: Promise<Task>[] = tasks.map((task: TaskDto): Promise<Task> => {
-            return this.taskService.createTask({
-                contentFileLink: task.contentFileLink,
-                subjectId: subjectId,
-                title: task.title,
-            });
+            return this.taskService.createTask(
+                {
+                    contentFileLink: task.contentFileLink,
+                    subjectId: subjectId,
+                    title: task.title,
+                },
+                manager,
+            );
         });
         try {
             const taskObjects: Task[] = await Promise.all(tasksData);

@@ -3,7 +3,7 @@ import { BaseServiceAbstract } from 'src/services/base/base.abstract.service';
 import { Task } from './entity/task.entity';
 import { TaskRepository } from '@repositories/task.repository';
 import { CreateTaskDto } from './dto/createTask.dto';
-import { UpdateResult } from 'typeorm';
+import { EntityManager, UpdateResult } from 'typeorm';
 import { UpdateTaskDto } from './dto/updateTask.dto';
 import { SubjectService } from '@modules/subjects/subjects.service';
 import { AppResponse } from 'src/types/common.type';
@@ -20,21 +20,29 @@ export class TaskService extends BaseServiceAbstract<Task> {
         super(taskRepository);
     }
 
-    async createTask(dto: CreateTaskDto): Promise<Task> {
+    async createTask(dto: CreateTaskDto, manager?: EntityManager): Promise<Task> {
         const { subjectId, title } = dto;
-        const task = await this.taskRepository.findOneByCondition({
-            subject: { id: subjectId },
-            title,
-        });
+        const task = await this.taskRepository.findOneByCondition(
+            {
+                subject: { id: subjectId },
+                title,
+            },
+            undefined,
+            manager,
+        );
         if (task) {
             throw new UnprocessableEntityException('tasks.This task name is exsisted');
         }
         try {
-            return await this.taskRepository.create({
-                contentFileLink: dto.contentFileLink,
-                subject: { id: subjectId },
-                title,
-            });
+            return await this.taskRepository.create(
+                {
+                    contentFileLink: dto.contentFileLink,
+                    subject: { id: subjectId },
+                    title,
+                },
+                undefined,
+                manager,
+            );
         } catch (error) {
             throw new UnprocessableEntityException('tasks.Error happen');
         }
