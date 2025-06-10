@@ -8,6 +8,7 @@ import {
     Patch,
     Post,
     Query,
+    Res,
     UseGuards,
     UseInterceptors,
 } from '@nestjs/common';
@@ -36,6 +37,8 @@ import { CourseWithoutCreatorDto } from './responseDto/courseResponse.dto';
 import { FindMemberOfCourseDto } from './dto/findMember.dto';
 import { UserCourseResponse } from '@modules/user_course/dto/UserCourseResponse.dto';
 import { DeleteTraineeDto } from './dto/deleteTrainee.dto';
+import { Response } from 'express';
+import { NoGlobalInterceptor } from 'src/decorators/no-global-interceptor.decorator';
 
 @Controller('courses')
 @ApiTags('courses')
@@ -194,5 +197,17 @@ export class CourseController {
         @CurrentUserDecorator() user: User,
     ): Promise<AppResponse<string[]>> {
         return await this.courseService.getMembersNameOfCourseForTrainee(courseId, user);
+    }
+
+    @Roles(ERolesUser.SUPERVISOR)
+    @UseGuards(SessionAuthGuard, RolesGuard)
+    @Get('supervisor/trainee/export')
+    @NoGlobalInterceptor()
+    async exportTrainee(
+        @Query() dto: FindMemberOfCourseDto,
+        @CurrentUserDecorator() user: User,
+        @Res() res: Response,
+    ): Promise<void> {
+        return await this.courseService.exportUsers(dto, user, res);
     }
 }
