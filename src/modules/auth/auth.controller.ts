@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { SignUpDto } from './dto/auth.dto';
 import { AuthService } from './auth.service';
@@ -8,6 +8,7 @@ import { LocalAuthGuard } from './guards/local.guard';
 import { RequestWithUser } from 'src/types/requests.type';
 import { SendCodeDto, VerifyCodeDto } from './dto/verify.dto';
 import { Request } from 'express';
+import { ForgotPasswordDto } from './dto/forgotPassword.dto';
 
 @Controller('auth')
 @ApiTags('auths')
@@ -42,5 +43,15 @@ export class AuthController {
     @Get('logout')
     async logout(@Req() request: Request): Promise<ResponseMessage> {
         return await this.authService.logout(request);
+    }
+
+    @Post('forgotPassword')
+    async forgotPasswd(@Body() dto: SendCodeDto): Promise<AppResponse<boolean>> {
+        return await this.authService.handleForgotPassword(dto);
+    }
+
+    @Patch('updatePasswdByCode')
+    async updatePasswdByCode(@Body() dto: ForgotPasswordDto): Promise<AppResponse<User>> {
+        return await this.authService.updatePasswordByCode(dto);
     }
 }
