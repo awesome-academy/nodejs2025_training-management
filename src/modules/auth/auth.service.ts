@@ -13,17 +13,18 @@ import { EEnvironment } from './enum/index.enum';
 import { ERolesUser, EStatusUser } from '@modules/users/enums/index.enum';
 import { CacheService } from '@modules/cache/cache.service';
 import { SendCodeDto, VerifyCodeDto } from './dto/verify.dto';
-import { VerifyService } from '@modules/queue/verify.service';
+import { QueueService } from '@modules/queue/queue.service';
 import { RequestWithUser } from 'src/types/requests.type';
 import { AppResponse, ResponseMessage } from 'src/types/common.type';
 import { Request } from 'express';
+import { EQueueName } from '@modules/queue/enum/index.enum';
 
 @Injectable()
 export class AuthService {
     constructor(
         private readonly userService: UsersService,
         private readonly cacheService: CacheService,
-        private readonly verifyService: VerifyService,
+        private readonly verifyService: QueueService,
     ) {}
 
     async signIn(dto: SignInDto): Promise<User> {
@@ -105,6 +106,7 @@ export class AuthService {
             await this.verifyService.addVerifyJob({
                 code,
                 email: email.toLowerCase(),
+                queueName: EQueueName.VerifyEmail,
             });
 
             return {
