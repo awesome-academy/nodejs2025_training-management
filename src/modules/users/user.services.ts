@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { UserRepository } from '@repositories/user.repository';
 import { BaseServiceAbstract } from 'src/services/base/base.abstract.service';
 import { User } from './entity/user.entity';
@@ -18,6 +18,13 @@ export class UsersService extends BaseServiceAbstract<User> {
     }
 
     async updateUser(dto: UpdateUserDto, user: User): Promise<User> {
+        const { email } = dto;
+        if (email !== user.email) {
+            const checkEmailIsExsisted = await this.userRepository.findOneByCondition({ email });
+            if (checkEmailIsExsisted) {
+                throw new UnprocessableEntityException('auths.Email is exists');
+            }
+        }
         await this.userRepository.update(user.id, dto);
         return await this.userRepository.findOneById(user.id);
     }
