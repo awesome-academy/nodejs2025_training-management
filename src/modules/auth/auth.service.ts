@@ -1,5 +1,6 @@
 import { UsersService } from '@modules/users/user.services';
 import {
+    BadRequestException,
     ForbiddenException,
     Injectable,
     NotFoundException,
@@ -22,6 +23,7 @@ import { EQueueName } from '@modules/queue/enum/index.enum';
 import { ForgotPasswordDto } from './dto/forgotPassword.dto';
 import { FORGOTPASSWORD_ENDPOINT } from 'src/constants/contants';
 import { ConfigService } from '@nestjs/config';
+import { UpdatePasswordDto } from './dto/updatePassword.dto';
 
 @Injectable()
 export class AuthService {
@@ -208,6 +210,19 @@ export class AuthService {
     async checkLoginStatus(@Req() req: RequestWithUser): Promise<AppResponse<boolean>> {
         return {
             data: req.user ? true : false,
+        };
+    }
+
+    async updatePassword({ newPassword, oldPassword }: UpdatePasswordDto, user: User): Promise<AppResponse<User>> {
+        if (user.password === oldPassword) {
+            throw new BadRequestException('auths.old and new passwords must be different');
+        }
+        const hashedNewPassword = await argon2.hash(newPassword);
+        const updatedUser = await this.userService.update(user.id, {
+            password: hashedNewPassword,
+        });
+        return {
+            data: updatedUser,
         };
     }
 
