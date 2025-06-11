@@ -1,5 +1,6 @@
 import { UsersService } from '@modules/users/user.services';
 import {
+    ForbiddenException,
     Injectable,
     NotFoundException,
     Req,
@@ -18,6 +19,8 @@ import { RequestWithUser } from 'src/types/requests.type';
 import { AppResponse, ResponseMessage } from 'src/types/common.type';
 import { Request } from 'express';
 import { EQueueName } from '@modules/queue/enum/index.enum';
+import { ForgotPasswordDto } from './dto/forgotPassword.dto';
+import { FORGOTPASSWORD_URL } from 'src/constants/contants';
 
 @Injectable()
 export class AuthService {
@@ -97,6 +100,59 @@ export class AuthService {
         };
     }
 
+    async handleForgotPassword({ email }: SendCodeDto): Promise<AppResponse<boolean>> {
+        const user = await this.userService.findByEmail(email);
+        if (!user) {
+            throw new NotFoundException('auths.Email is not exists');
+        }
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const redisKey = `${user.id}:code`;
+        try {
+            await this.cacheService.setCache(redisKey, code, 300);
+            await this.verifyService.addVerifyJob({
+                link: `${FORGOTPASSWORD_URL}?email=${email}&code=${code}`,
+                email: email.toLowerCase(),
+                queueName: EQueueName.ForgotPassword,
+            });
+
+            return {
+                data: true,
+            };
+        } catch (error) {
+            throw new NotFoundException('auths.An error occurred while sending the verification code');
+        }
+    }
+
+    async updatePasswordByCode(dto: ForgotPasswordDto): Promise<AppResponse<User>> {
+        const { email, password, code, environment } = dto;
+        const user = await this.userService.findByEmail(email);
+        if (!user) throw new NotFoundException('users.user not found');
+        switch (environment) {
+            case EEnvironment.SUPERVISOR:
+                if (user.role !== ERolesUser.SUPERVISOR) {
+                    throw new ForbiddenException('Forbidden Resource');
+                }
+                break;
+            case EEnvironment.TRAINEE:
+                if (user.role !== ERolesUser.TRAINEE) {
+                    throw new ForbiddenException('Forbidden Resource');
+                }
+                break;
+        }
+        const codeInRedis = await this.cacheService.getCache(`${user.id}:code`);
+        if (code.toString() !== codeInRedis.toString()) {
+            throw new UnprocessableEntityException('auths.invalid code');
+        }
+        const hashedPassword = await argon2.hash(password);
+        const updatedUser = await this.userService.update(user.id, {
+            password: hashedPassword,
+        });
+        await this.cacheService.deleteCache(`${user.id}:code`);
+        return {
+            data: updatedUser,
+        };
+    }
+
     async handleSendCode({ email }: SendCodeDto): Promise<AppResponse<boolean>> {
         const user = await this.userService.findByEmail(email);
         const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -131,12 +187,9 @@ export class AuthService {
             };
         }
 
-        const updatedUser = await this.userService.updateUser(
-            {
-                status: EStatusUser.ACTIVE,
-            },
-            user,
-        );
+        const updatedUser = await this.userService.update(user.id, {
+            status: EStatusUser.ACTIVE,
+        });
         return {
             data: updatedUser,
         };
