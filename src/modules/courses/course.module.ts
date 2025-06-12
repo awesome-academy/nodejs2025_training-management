@@ -10,6 +10,7 @@ import { CourseController } from './course.controller';
 import { UserCourseModule } from '@modules/user_course/user_course.module';
 import { UserSubjectModule } from '@modules/user_subject/user_subject.module';
 import { UserTaskModule } from '@modules/user_task/user_task.module';
+import { QueueModule } from '@modules/queue/queue.module';
 
 @Module({
     imports: [
@@ -21,6 +22,7 @@ import { UserTaskModule } from '@modules/user_task/user_task.module';
         UserCourseModule,
         UserSubjectModule,
         UserTaskModule,
+        QueueModule,
     ],
     providers: [...courseProviders, CourseService],
     controllers: [CourseController],

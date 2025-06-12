@@ -40,6 +40,8 @@ import { ECourseStatus } from './enum/index.enum';
 import { DeleteTraineeDto } from './dto/deleteTrainee.dto';
 import { Response } from 'express';
 import * as ExcelJS from 'exceljs';
+import { QueueService } from '@modules/queue/queue.service';
+import { ENotificationTraineeEnum, ENotificationType, EQueueName } from '@modules/queue/enum/index.enum';
 
 @Injectable()
 export class CourseService extends BaseServiceAbstract<Course> {
@@ -53,6 +55,8 @@ export class CourseService extends BaseServiceAbstract<Course> {
         private readonly userCourseService: UserCourseService,
         private readonly userSubjectService: UserSubjectService,
         private readonly userTaskService: UserTaskService,
+        @Inject(forwardRef(() => QueueService))
+        private readonly queueService: QueueService,
     ) {
         super(courseRepository);
     }
@@ -257,6 +261,13 @@ export class CourseService extends BaseServiceAbstract<Course> {
             await this.userTaskService.handleCreateUserTask(userSubject, courseSubject.tasks);
         }
         const userCourse = await this.userCourseService.handleAddTraineeForCourse(trainee, courseId);
+        await this.queueService.addVerifyJob({
+            queueName: EQueueName.Notification,
+            notificationType: ENotificationType.TraineeAddOrRemove,
+            type: ENotificationTraineeEnum.ADD,
+            email: email,
+            courseName: courseDetail.name,
+        });
         return userCourse;
     }
 
@@ -514,8 +525,27 @@ export class CourseService extends BaseServiceAbstract<Course> {
         user: User,
     ): Promise<AppResponse<boolean>> {
         await this._checkUserIsSupervisorOfCourse(courseId, user);
+        const userCourse = await this.userCourseService.findOneByCondition(
+            {
+                id: userCourseId,
+            },
+            {
+                relations: ['user', 'course'],
+            },
+        );
+        if (!userCourse) {
+            throw new NotFoundException('courses.Trainee Not Found');
+        }
+        const status: boolean = await await this.userCourseService.remove(userCourseId);
+        await this.queueService.addVerifyJob({
+            queueName: EQueueName.Notification,
+            notificationType: ENotificationType.TraineeAddOrRemove,
+            type: ENotificationTraineeEnum.ADD,
+            email: userCourse.user.email,
+            courseName: userCourse.course.name,
+        });
         return {
-            data: await this.userCourseService.remove(userCourseId),
+            data: status,
         };
     }
 

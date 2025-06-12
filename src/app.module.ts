@@ -23,6 +23,7 @@ import { AuthModule } from '@modules/auth/auth.module';
 import { PassportModule } from '@nestjs/passport';
 import { PageController } from './controllers/page.controller';
 import { RedisCacheModule } from '@modules/cache/cache.module';
+import { ScheduleModule } from '@nestjs/schedule';
 // import { AuthModule } from './auth/auth.module';
 
 @Module({
@@ -36,6 +37,7 @@ import { RedisCacheModule } from '@modules/cache/cache.module';
                 port: 6379,
             },
         }),
+        ScheduleModule.forRoot(),
         MailerModule.forRootAsync({
             imports: [ConfigModule],
             useFactory: (configService: ConfigService) => ({
