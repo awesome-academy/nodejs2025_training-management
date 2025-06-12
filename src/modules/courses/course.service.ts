@@ -38,6 +38,8 @@ import { FindMemberOfCourseDto } from './dto/findMember.dto';
 import { UserCourseResponse } from '@modules/user_course/dto/UserCourseResponse.dto';
 import { ECourseStatus } from './enum/index.enum';
 import { DeleteTraineeDto } from './dto/deleteTrainee.dto';
+import { Response } from 'express';
+import * as ExcelJS from 'exceljs';
 
 @Injectable()
 export class CourseService extends BaseServiceAbstract<Course> {
@@ -119,7 +121,7 @@ export class CourseService extends BaseServiceAbstract<Course> {
         dto: FindMemberOfCourseDto,
         user: User,
     ): Promise<AppResponse<FindAllResponse<UserCourseResponse>>> {
-        const { page, pageSize, search, courseId } = dto;
+        const { page, pageSize, search, courseId, status } = dto;
         const course = await this.courseRepository.findOneByCondition({
             id: courseId,
             supervisorCourses: { user: { id: user.id } },
@@ -141,6 +143,10 @@ export class CourseService extends BaseServiceAbstract<Course> {
             };
         }
 
+        if (status) {
+            condition.status = status;
+        }
+
         const result = await this.userCourseService.findAll(condition, {
             skip,
             take: limit,
@@ -157,6 +163,68 @@ export class CourseService extends BaseServiceAbstract<Course> {
                 items: formattedItems,
             },
         };
+    }
+
+    async exportUsers(dto: FindMemberOfCourseDto, user: User, res: Response) {
+        const { search, courseId, status } = dto;
+        const workbook = new ExcelJS.Workbook();
+
+        const course = await this.courseRepository.findOneByCondition({
+            id: courseId,
+            supervisorCourses: { user: { id: user.id } },
+        });
+
+        if (!course) {
+            throw new ForbiddenException('Forbidden Resource');
+        }
+
+        const worksheet = workbook.addWorksheet(`List Trainees of ${course.name} Course`);
+
+        const condition: any = {
+            course: {
+                id: courseId,
+            },
+        };
+
+        if (search) {
+            condition.user = {
+                name: ILike(`%${search}%`),
+            };
+        }
+
+        if (status) {
+            condition.status = status;
+        }
+
+        const result = await this.userCourseService.findAll(condition, {
+            relations: ['user'],
+        });
+
+        worksheet.columns = [
+            { header: 'ID', key: 'id', width: 10 },
+            { header: 'Name', key: 'name', width: 80 },
+            { header: 'Email', key: 'email', width: 80 },
+            { header: 'Progress', key: 'progress', width: 10 },
+            { header: 'Status', key: 'status', width: 30 },
+        ];
+
+        worksheet.addRows(
+            result.items.map((userCourse, index) => {
+                return {
+                    id: index,
+                    name: userCourse.user.name,
+                    email: userCourse.user.email,
+                    progress: userCourse.courseProgress,
+                    status: userCourse.status,
+                };
+            }),
+        );
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=users.xlsx');
+
+        await workbook.xlsx.write(res);
+        res.end();
     }
 
     async addTraineeForCourse(email: string, courseId: string): Promise<UserCourse> {
