@@ -38,6 +38,11 @@ export type NotificationType = (
     notificationType: ENotificationType;
 };
 
-export type QueueDateType = (NotificationType | VerifyCodeType) & {
+export type ForgotPasswordType = {
+    email: string;
+    link: string;
+};
+
+export type QueueDateType = (NotificationType | VerifyCodeType | ForgotPasswordType) & {
     queueName: EQueueName;
 };

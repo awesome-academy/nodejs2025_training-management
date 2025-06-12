@@ -6,6 +6,7 @@ export enum ENotificationTraineeEnum {
 export enum EQueueName {
     VerifyEmail = 'verify-email',
     Notification = 'notification',
+    ForgotPassword = 'forgotPassword',
 }
 
 export enum ENotificationType {
