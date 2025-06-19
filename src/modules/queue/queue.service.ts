@@ -15,11 +15,14 @@ import { FindAllResponse } from 'src/types/common.type';
 @Injectable()
 export class QueueService {
     constructor(
-        @InjectQueue('verify-email')
+        @InjectQueue(EQueueName.VerifyEmail)
         private readonly verifyQueue: Queue,
 
-        @InjectQueue('notification')
+        @InjectQueue(EQueueName.Notification)
         private readonly notificationQueue: Queue,
+
+        @InjectQueue(EQueueName.ForgotPassword)
+        private readonly forgotPasswordQueue: Queue,
 
         private readonly supervisorCourseSerivce: SupervisorCourseService,
 
@@ -43,6 +46,9 @@ export class QueueService {
                 break;
             case EQueueName.Notification:
                 await this.notificationQueue.add(queueName, data);
+                break;
+            case EQueueName.ForgotPassword:
+                await this.forgotPasswordQueue.add(queueName, data);
                 break;
         }
     }
