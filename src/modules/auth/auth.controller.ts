@@ -9,6 +9,12 @@ import { RequestWithUser } from 'src/types/requests.type';
 import { SendCodeDto, VerifyCodeDto } from './dto/verify.dto';
 import { Request } from 'express';
 import { ForgotPasswordDto } from './dto/forgotPassword.dto';
+import { UpdatePasswordDto } from './dto/updatePassword.dto';
+import { CurrentUserDecorator } from 'src/decorators/current-user.decorator';
+import { Roles } from 'src/decorators/roles.decorator';
+import { ERolesUser } from '@modules/users/enums/index.enum';
+import { SessionAuthGuard } from './guards/session.guard';
+import { RolesGuard } from './guards/roles.guard';
 
 @Controller('auth')
 @ApiTags('auths')
@@ -53,5 +59,12 @@ export class AuthController {
     @Patch('updatePasswdByCode')
     async updatePasswdByCode(@Body() dto: ForgotPasswordDto): Promise<AppResponse<User>> {
         return await this.authService.updatePasswordByCode(dto);
+    }
+
+    @Roles(ERolesUser.SUPERVISOR, ERolesUser.TRAINEE)
+    @UseGuards(SessionAuthGuard, RolesGuard)
+    @Patch('updatePasswd')
+    async updatePasswd(@Body() dto: UpdatePasswordDto, @CurrentUserDecorator() user: User): Promise<AppResponse<User>> {
+        return await this.authService.updatePassword(dto, user);
     }
 }
