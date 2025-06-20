@@ -10,7 +10,6 @@ import { BaseServiceAbstract } from 'src/services/base/base.abstract.service';
 import { Subject } from './entity/subject.entity';
 import { SubjectRepository } from '@repositories/subject.repository';
 import { CreateSubjectDto, TaskDto } from './dto/createSubject.dto';
-import { UsersService } from '@modules/users/user.services';
 import { TaskService } from '@modules/tasks/task.service';
 import { Task } from '@modules/tasks/entity/task.entity';
 import { EntityManager, ILike, UpdateResult } from 'typeorm';
@@ -27,7 +26,6 @@ export class SubjectService extends BaseServiceAbstract<Subject> {
     constructor(
         @Inject('SUBJECT_REPOSITORY')
         private readonly subjectRepository: SubjectRepository,
-        private readonly userService: UsersService,
         @Inject(forwardRef(() => TaskService))
         private readonly taskService: TaskService,
     ) {
@@ -69,6 +67,10 @@ export class SubjectService extends BaseServiceAbstract<Subject> {
                 relations: ['tasksCreated', 'creator'],
             },
         );
+
+        if (!subject) {
+            throw new NotFoundException('subjects.Subject Not Found');
+        }
 
         if (subject.creator.id !== user.id) {
             throw new ForbiddenException('Forbidden Resource');
@@ -171,10 +173,11 @@ export class SubjectService extends BaseServiceAbstract<Subject> {
     }
 
     async deleteSubject(subjectId: string, user: User): Promise<AppResponse<UpdateResult>> {
-        if (this._checkSubjectIsStudyByTrainee(subjectId)) {
+        const checkSubjectIsStudyByTrainee = await this._checkSubjectIsStudyByTrainee(subjectId);
+        if (checkSubjectIsStudyByTrainee) {
             throw new UnprocessableEntityException('subjects.Can not adujst this subject');
         }
-        const subject = await this.subjectRepository.findOneById(subjectId);
+        const subject = await this.subjectRepository.findOneById(subjectId, { relations: ['creator'] });
         if (!subject) {
             throw new NotFoundException('subjects.Subject not found');
         }

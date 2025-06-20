@@ -612,7 +612,7 @@ document.getElementById('addMemberForm').addEventListener('submit', async functi
 
     const emails = document
         .getElementById('memberEmails')
-        .value.value.split('\n')
+        .value.split('\n')
         .map((email) => email.trim())
         .filter((email) => email !== '');
 

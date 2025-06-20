@@ -3,7 +3,6 @@ import { DatabaseModule } from '@modules/databases/databases.module';
 import { SharedModule } from '@modules/shared/shared.module';
 import { CourseSubjectService } from './course_subject.service';
 import { courseSubjectProviders } from './course_subject.provider';
-import { CourseModule } from '@modules/courses/course.module';
 import { SubjectModule } from '@modules/subjects/subjects.module';
 import { UserSubjectModule } from '@modules/user_subject/user_subject.module';
 import { UserCourseModule } from '@modules/user_course/user_course.module';
@@ -14,7 +13,6 @@ import { SupervisorCourseModule } from '@modules/supervisor_course/supervisor_co
     imports: [
         DatabaseModule,
         SharedModule,
-        forwardRef(() => CourseModule),
         forwardRef(() => SubjectModule),
         UserSubjectModule,
         UserCourseModule,
