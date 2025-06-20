@@ -24,12 +24,13 @@ import { PassportModule } from '@nestjs/passport';
 import { PageController } from './controllers/page.controller';
 import { RedisCacheModule } from '@modules/cache/cache.module';
 import { ScheduleModule } from '@nestjs/schedule';
-// import { AuthModule } from './auth/auth.module';
+import * as path from 'path';
 
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
+            envFilePath: path.resolve(process.cwd(), `.env.test`),
         }),
         BullModule.forRoot({
             connection: {
