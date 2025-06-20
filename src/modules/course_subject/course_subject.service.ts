@@ -1,6 +1,5 @@
 import {
     ForbiddenException,
-    forwardRef,
     Inject,
     Injectable,
     NotFoundException,
@@ -9,8 +8,6 @@ import {
 import { BaseServiceAbstract } from 'src/services/base/base.abstract.service';
 import { CourseSubject } from './entity/course_subject.entity';
 import { CourseSubjectRepository } from '@repositories/course_subject.repository';
-import { CourseService } from '@modules/courses/course.service';
-import { SubjectService } from '@modules/subjects/subjects.service';
 import { EntityManager, UpdateResult } from 'typeorm';
 import { UserSubjectService } from '@modules/user_subject/user_subject.service';
 import { User } from '@modules/users/entity/user.entity';
@@ -23,9 +20,6 @@ export class CourseSubjectService extends BaseServiceAbstract<CourseSubject> {
     constructor(
         @Inject('COURSE_SUBJECT_REPOSITORY')
         private readonly courseSubjectRepository: CourseSubjectRepository,
-        @Inject(forwardRef(() => CourseService))
-        private readonly courseService: CourseService,
-        private readonly subjectService: SubjectService,
         private readonly userSubjectService: UserSubjectService,
         private readonly supervisorCourseService: SupervisorCourseService,
     ) {
