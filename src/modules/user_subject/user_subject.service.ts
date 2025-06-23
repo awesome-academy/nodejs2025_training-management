@@ -1,4 +1,4 @@
-import { ForbiddenException, Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { ForbiddenException, forwardRef, Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { BaseServiceAbstract } from 'src/services/base/base.abstract.service';
 import { UserSubject } from './entity/user_subject.entity';
 import { UserSubjectRepository } from '@repositories/user_subject.repository';
@@ -15,6 +15,7 @@ export class UserSubjectService extends BaseServiceAbstract<UserSubject> {
     constructor(
         @Inject('USER_SUBJECT_REPOSITORY')
         private readonly userSubjectRepository: UserSubjectRepository,
+        @Inject(forwardRef(() => UserTaskService))
         private readonly userTaskService: UserTaskService,
         private readonly userCourseService: UserCourseService,
     ) {

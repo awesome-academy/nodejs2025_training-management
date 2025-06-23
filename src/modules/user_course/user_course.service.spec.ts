@@ -15,6 +15,7 @@ import { userCourseProviders } from './user_course.provider';
 import { Subject } from '@modules/subjects/entity/subject.entity';
 import { EUserCourseStatus } from './enum/index.enum';
 import { UnprocessableEntityException } from '@nestjs/common';
+import { UserTaskRepository } from '@repositories/user_task.repository';
 
 describe('UserCourseService (Unit Test)', () => {
     let service: UserCourseService;
@@ -112,6 +113,11 @@ describe('UserCourseService (Unit Test)', () => {
                     useFactory: (dataSource: DataSource) => {
                         return new UserCourseRepository(dataSource);
                     },
+                    inject: ['DATA_SOURCE'],
+                },
+                {
+                    provide: 'USER_TASK_REPOSITORY',
+                    useFactory: (dataSource: DataSource) => new UserTaskRepository(dataSource),
                     inject: ['DATA_SOURCE'],
                 },
             ],

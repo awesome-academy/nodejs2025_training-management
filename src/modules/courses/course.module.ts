@@ -22,7 +22,7 @@ import { QueueModule } from '@modules/queue/queue.module';
         UserCourseModule,
         UserSubjectModule,
         UserTaskModule,
-        QueueModule,
+        forwardRef(() => QueueModule),
     ],
     providers: [...courseProviders, CourseService],
     controllers: [CourseController],
