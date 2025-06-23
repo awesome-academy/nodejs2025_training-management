@@ -1,11 +1,10 @@
-import { ForbiddenException, forwardRef, Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { BaseServiceAbstract } from 'src/services/base/base.abstract.service';
 import { Task } from './entity/task.entity';
 import { TaskRepository } from '@repositories/task.repository';
 import { CreateTaskDto } from './dto/createTask.dto';
 import { EntityManager, UpdateResult } from 'typeorm';
 import { UpdateTaskDto } from './dto/updateTask.dto';
-import { SubjectService } from '@modules/subjects/subjects.service';
 import { AppResponse } from 'src/types/common.type';
 import { User } from '@modules/users/entity/user.entity';
 
@@ -14,8 +13,6 @@ export class TaskService extends BaseServiceAbstract<Task> {
     constructor(
         @Inject('TASK_REPOSITORY')
         private readonly taskRepository: TaskRepository,
-        @Inject(forwardRef(() => SubjectService))
-        private readonly subjectService: SubjectService,
     ) {
         super(taskRepository);
     }
