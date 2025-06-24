@@ -4,32 +4,45 @@ import { BaseServiceAbstract } from 'src/services/base/base.abstract.service';
 import { User } from './entity/user.entity';
 import { CreateNewUserDto } from './dto/createNewUser.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
-import { EStatusUser } from './enums/index.enum';
+import { ERolesUser, EStatusUser } from './enums/index.enum';
 import { AppResponse, FindAllResponse } from 'src/types/common.type';
 import { ILike, UpdateResult } from 'typeorm';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { getLimitAndSkipHelper } from 'src/helper/pagination.helper';
 import * as argon2 from 'argon2';
+import { UpdateTraineeDto } from './dto/updateTrainee.dto';
+import { ConfigService } from '@nestjs/config';
+import { CreateTraineeDto } from './dto/createTrainee.dto';
 
 @Injectable()
 export class UsersService extends BaseServiceAbstract<User> {
     constructor(
         @Inject('USER_REPOSITORY')
         private readonly userRepository: UserRepository,
+        private readonly configService: ConfigService,
     ) {
         super(userRepository);
     }
+
+    async getCurrentUser(user: User): Promise<AppResponse<User>> {
+        return {
+            data: user,
+        };
+    }
+
     async create(dto: CreateNewUserDto): Promise<User> {
         return await this.userRepository.create(dto);
     }
 
-    async createTrainee(dto: CreateNewUserDto): Promise<AppResponse<User>> {
-        const { email, password, ...data } = dto;
-        const trainee = await this.userRepository.findOneById(email);
+    async createTrainee(dto: CreateTraineeDto): Promise<AppResponse<User>> {
+        const { email, ...data } = dto;
+        const trainee = await this.userRepository.findOneByCondition({ email });
         if (trainee) {
             throw new UnprocessableEntityException('auths.Email is exsisted');
         }
-        const hashedPassword = await argon2.hash(password);
+        const defaultPasswd = this.configService.get<string>('PASSWORD_DEFAULT');
+        console.log(defaultPasswd);
+        const hashedPassword = await argon2.hash(this.configService.get<string>('PASSWORD_DEFAULT'));
         return {
             data: await this.userRepository.create({
                 email,
@@ -42,7 +55,9 @@ export class UsersService extends BaseServiceAbstract<User> {
     async getTrainee(dto: PaginationDto): Promise<AppResponse<FindAllResponse<User>>> {
         const { page, pageSize, search } = dto;
         const { skip, limit } = getLimitAndSkipHelper(page, pageSize);
-        const condition: any = {};
+        const condition: any = {
+            role: ERolesUser.TRAINEE,
+        };
         if (search) {
             condition.name = ILike(`%${search}%`);
         }
@@ -50,16 +65,21 @@ export class UsersService extends BaseServiceAbstract<User> {
             data: await this.findAll(condition, {
                 skip,
                 take: limit,
+                order: {
+                    createdAt: 'DESC',
+                },
             }),
         };
     }
 
-    async updateTrainee(traineeId: string, dto: UpdateUserDto): Promise<User> {
+    async updateTrainee(traineeId: string, dto: UpdateTraineeDto): Promise<AppResponse<User>> {
         const trainee = await this.userRepository.findOneById(traineeId);
         if (!trainee) {
             throw new NotFoundException('auths.user not found');
         }
-        return await this.updateUser(dto, trainee);
+        return {
+            data: await this.updateUser(dto, trainee),
+        };
     }
 
     async removeTrainee(traineeId: string): Promise<AppResponse<UpdateResult>> {
@@ -68,7 +88,9 @@ export class UsersService extends BaseServiceAbstract<User> {
             throw new NotFoundException('auths.user not found');
         }
         return {
-            data: await this.userRepository.update(trainee.id, { status: EStatusUser.INACTIVE }),
+            data: await this.userRepository.update(trainee.id, {
+                status: EStatusUser.INACTIVE,
+            }),
         };
     }
 

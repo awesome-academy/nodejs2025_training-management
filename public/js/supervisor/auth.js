@@ -75,3 +75,61 @@ document.getElementById('authForm').addEventListener('submit', async function (e
         createNotification(error.message, 'error');
     }
 });
+
+document.addEventListener('DOMContentLoaded', function () {
+    const forgotForm = document.getElementById('forgotPasswordForm');
+    if (forgotForm) {
+        forgotForm.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const email = document.getElementById('forgotEmail').value.trim();
+            const errorBox = document.getElementById('forgotPasswordError');
+            errorBox.textContent = '';
+            if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+                errorBox.textContent = 'Vui lòng nhập email hợp lệ.';
+                return;
+            }
+            try {
+                const btn = this.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang gửi...';
+                const res = await fetch('/auth/forgotPassword', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email }),
+                });
+                const data = await res.json();
+                if ((data.statusCode === 200 || data.statusCode === 201) && data.data === true) {
+                    errorBox.classList.remove('text-danger');
+                    errorBox.classList.add('text-success');
+                    errorBox.textContent = 'Yêu cầu thành công! Vui lòng kiểm tra email.';
+                    setTimeout(() => {
+                        bootstrap.Modal.getInstance(document.getElementById('forgotPasswordModal')).hide();
+                        forgotForm.reset();
+                        errorBox.textContent = '';
+                        errorBox.classList.remove('text-success');
+                    }, 2000);
+                } else {
+                    let msg = data.messages || data.message || 'Có lỗi xảy ra.';
+                    errorBox.classList.remove('text-success');
+                    errorBox.classList.add('text-danger');
+                    errorBox.textContent = Array.isArray(msg) ? msg.join('\n') : msg;
+                }
+            } catch (err) {
+                errorBox.classList.remove('text-success');
+                errorBox.classList.add('text-danger');
+                errorBox.textContent = 'Có lỗi xảy ra. Vui lòng thử lại.';
+            } finally {
+                const btn = this.querySelector('button[type="submit"]');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Gửi yêu cầu';
+            }
+        });
+        document.getElementById('forgotPasswordModal').addEventListener('hidden.bs.modal', function () {
+            forgotForm.reset();
+            const errorBox = document.getElementById('forgotPasswordError');
+            errorBox.textContent = '';
+            errorBox.classList.remove('text-success');
+            errorBox.classList.remove('text-danger');
+        });
+    }
+});

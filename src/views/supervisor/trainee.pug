@@ -1,0 +1,149 @@
+extends layout
+
+block content
+  .container-fluid.py-4
+    .row.mb-4
+      .col-12
+        .d-flex.justify-content-between.align-items-center.flex-wrap.gap-2
+          h2.mb-0
+            i.fas.fa-user-graduate.me-2
+            | Quản lý trainee
+          .d-flex.align-items-center.gap-2
+            .trainee-search-box.position-relative.me-2
+              input#traineeSearch.form-control.rounded-pill.shadow-sm(type="text" placeholder="Tìm kiếm trainee..." style="padding-left: 2.5rem; height: 44px; min-width: 220px;")
+              i.fas.fa-search.position-absolute.text-muted(style="left: 16px; top: 50%; transform: translateY(-50%); pointer-events: none;")
+            button.btn.btn-primary.btn-sm(data-bs-toggle="modal" data-bs-target="#addTraineeModal")
+              i.fas.fa-user-plus.me-2
+              | Thêm trainee
+    .row
+      .col-12
+        .card.shadow-sm
+          .card-body
+            .table-responsive
+              table.table.table-hover
+                thead
+                  tr
+                    th STT
+                    th Họ tên
+                    th Email
+                    th Trạng thái
+                    th Thao tác
+                tbody#traineesList
+                  // Dữ liệu trainee sẽ được thêm vào đây
+            #traineePagination.d-flex.justify-content-center.mt-4
+              // Phân trang sẽ được thêm vào đây
+
+  // Modal thêm/sửa trainee
+  #addTraineeModal.modal.fade(tabindex="-1")
+    .modal-dialog
+      .modal-content
+        .modal-header
+          h5.modal-title
+            i.fas.fa-user-plus.me-2
+            | Thêm/Sửa trainee
+          button.btn-close(type="button" data-bs-dismiss="modal")
+        .modal-body
+          form#traineeForm
+            .mb-3
+              label.form-label(for="traineeName") Họ tên
+              input#traineeName.form-control(type="text" name="name" required)
+            .mb-3
+              label.form-label(for="traineeEmail") Email
+              input#traineeEmail.form-control(type="email" name="email" required)
+            .mb-3
+              label.form-label(for="traineeStatus") Trạng thái
+              select#traineeStatus.form-select(name="status" required)
+                option(value="ACTIVE") Đang hoạt động
+                option(value="INACTIVE") Không hoạt động
+        .modal-footer
+          button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Hủy
+          button.btn.btn-primary(type="submit", form="traineeForm") Lưu
+
+  // Modal xác nhận xóa trainee
+  #deleteTraineeModal.modal.fade(tabindex="-1")
+    .modal-dialog
+      .modal-content
+        .modal-header.bg-danger.text-white
+          h5.modal-title
+            i.fas.fa-trash.me-2
+            | Xác nhận xóa trainee
+          button.btn-close.btn-close-white(type="button" data-bs-dismiss="modal")
+        .modal-body
+          p Bạn có chắc chắn muốn xóa trainee này không?
+        .modal-footer.bg-light
+          button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Hủy
+          button#confirmDeleteTrainee.btn.btn-danger Xóa
+
+  style.
+    .table th, .table td {
+      vertical-align: middle;
+      text-align: center;
+    }
+    .btn-sm {
+      padding: 0.4rem 1rem;
+      font-size: 0.95rem;
+    }
+    .modal-content {
+      border-radius: 15px;
+    }
+    .modal-header {
+      border-bottom: 2px solid #f8f9fa;
+      border-radius: 15px 15px 0 0;
+    }
+    .modal-footer {
+      border-top: 2px solid #f8f9fa;
+      border-radius: 0 0 15px 15px;
+    }
+    .form-control, .form-select {
+      border-radius: 8px;
+      border: 1px solid #dee2e6;
+      padding: 0.75rem;
+      transition: all 0.3s ease;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .form-label {
+      font-weight: 500;
+      color: #2c3e50;
+    }
+    .action-btn {
+      background: none;
+      border: none;
+      padding: 5px;
+      margin: 0 3px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .action-btn:hover {
+      transform: scale(1.1);
+    }
+    .action-btn i {
+      font-size: 1.2rem;
+    }
+    .btn-edit i { color: #0d6efd; }
+    .btn-delete i { color: #dc3545; }
+    .trainee-search-box {
+      margin-bottom: 1rem;
+    }
+    .trainee-search-box .form-control {
+      background: #fff;
+      border-radius: 50px;
+      border: 1.5px solid #e9ecef;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-size: 1.05rem;
+    }
+    .trainee-search-box .form-control:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 0.15rem rgba(13,110,253,.15);
+      background: #f8f9fa;
+    }
+    .trainee-search-box .fa-search {
+      font-size: 1.1rem;
+      color: #adb5bd;
+    }
+
+block scripts
+  script(src="/js/supervisor/trainee.js" defer) 

@@ -5,6 +5,7 @@ const subjectPageSize = 2;
 let currentMemberPage = 1;
 const memberPageSize = 10;
 let currentMemberSearch = '';
+let currentMemberStatus = '';
 
 let currentSupervisorPage = 1;
 const pageSize = 10;
@@ -291,7 +292,6 @@ function renderSubjects(subjects) {
           `;
             subjectsList.appendChild(subjectCard);
 
-            // Thêm sự kiện click cho toàn bộ subject card
             const card = subjectCard.querySelector('.subject-card');
             const tasksSection = card.querySelector('.tasks-section');
 
@@ -422,7 +422,15 @@ async function fetchMembers(page = 1, search = '') {
     try {
         showLoading();
 
-        const url = `/courses/supervisor/members?page=${page}&pageSize=${memberPageSize}&courseId=${courseId}${search ? `&search=${encodeURIComponent(search)}` : ''}`;
+        let url = `/courses/supervisor/members?page=${page}&pageSize=${memberPageSize}&courseId=${courseId}`;
+
+        if (search) {
+            url += `&search=${encodeURIComponent(search)}`;
+        }
+
+        if (currentMemberStatus) {
+            url += `&status=${encodeURIComponent(currentMemberStatus)}`;
+        }
 
         const response = await fetch(url);
         const result = await response.json();
@@ -600,6 +608,42 @@ document.getElementById('memberSearch').addEventListener('keypress', (e) => {
         currentMemberSearch = e.target.value.trim();
         currentMemberPage = 1;
         fetchMembers(currentMemberPage, currentMemberSearch);
+    }
+});
+
+document.getElementById('applyFilter').addEventListener('click', () => {
+    currentMemberSearch = document.getElementById('memberSearch').value.trim();
+    currentMemberStatus = document.getElementById('memberStatusFilter').value;
+    currentMemberPage = 1;
+    fetchMembers(currentMemberPage, currentMemberSearch);
+});
+
+document.getElementById('exportMembers').addEventListener('click', async () => {
+    try {
+        showLoading();
+
+        let url = `http://localhost:3000/courses/supervisor/trainee/export?page=${currentMemberPage}&pageSize=${memberPageSize}&courseId=${courseId}`;
+
+        if (currentMemberSearch) {
+            url += `&search=${encodeURIComponent(currentMemberSearch)}`;
+        }
+
+        if (currentMemberStatus) {
+            url += `&status=${encodeURIComponent(currentMemberStatus)}`;
+        }
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `danh-sach-thanh-vien-khoa-hoc-${courseId}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showNotification('success', 'Thành công', 'Đã xuất file Excel thành công');
+    } catch (error) {
+        console.error('Error exporting members:', error);
+        showNotification('error', 'Lỗi', 'Không thể xuất file Excel');
+    } finally {
+        hideLoading();
     }
 });
 

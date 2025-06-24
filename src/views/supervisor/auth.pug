@@ -155,6 +155,39 @@ block styles
     .page-transition.active {
       transform: translateX(0);
     }
+    #forgotPasswordModal .modal-content {
+      border-radius: 1.5rem;
+    }
+    #forgotPasswordModal .form-label {
+      font-weight: 500;
+      color: #2c3e50;
+      margin-bottom: 0.5rem;
+    }
+    #forgotPasswordModal .form-control {
+      border-radius: 1rem;
+      font-size: 1.05rem;
+      padding: 0.9rem 1.2rem;
+      border: 1.5px solid #e9ecef;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    #forgotPasswordModal .form-control:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 0.15rem rgba(13,110,253,.15);
+      background: #f8f9fa;
+    }
+    #forgotPasswordModal .btn {
+      padding: 0.8rem 1.5rem;
+      font-size: 1.05rem;
+      border-radius: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    #forgotPasswordError {
+      min-height: 24px;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+    }
 
 block content
   .page-transition#pageTransition
@@ -178,6 +211,10 @@ block content
       
       button.auth-button(type="submit")= isLogin ? 'Đăng nhập' : 'Đăng ký'
     
+    if isLogin
+      .text-end.mt-2
+        a.forgot-password-link.text-primary(href="#" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal") Quên mật khẩu?
+    
     .auth-switch
       if isLogin
         p Chưa có tài khoản? 
@@ -185,6 +222,26 @@ block content
       else
         p Đã có tài khoản? 
           a(href="/views/supervisor/auth?mode=login", onclick="handlePageTransition(event)") Đăng nhập
+
+  #forgotPasswordModal.modal.fade(tabindex="-1")
+    .modal-dialog
+      .modal-content
+        .modal-header
+          h5.modal-title.text-primary
+            i.fas.fa-envelope.me-2
+            | Quên mật khẩu
+          button.btn-close(type="button" data-bs-dismiss="modal")
+        .modal-body
+          form#forgotPasswordForm
+            .mb-3
+              label.form-label(for="forgotEmail")
+                i.fas.fa-envelope.me-2.text-muted
+                | Email
+              input#forgotEmail.form-control(type="email" name="email" placeholder="Nhập email của bạn" required)
+            .mb-3.text-danger#forgotPasswordError
+            button.btn.btn-primary.w-100(type="submit")
+              i.fas.fa-paper-plane.me-2
+              | Gửi yêu cầu
 
 block scripts
   script(src="/js/supervisor/auth.js" defer)

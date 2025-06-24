@@ -305,5 +305,23 @@ block content
         .stat-number 24/7
         .stat-label Hỗ Trợ
 
+  .user-menu.text-end.mt-4
+    .user-info.dropdown
+      img.user-avatar.dropdown-toggle(
+        src="https://i.pravatar.cc/150?img=1",
+        alt="User Avatar",
+        data-bs-toggle="dropdown",
+        aria-expanded="false"
+      )
+      ul.dropdown-menu.dropdown-menu-end
+        li
+          a.dropdown-item(href="#" data-bs-toggle="modal" data-bs-target="#changePasswordModal")
+            i.fas.fa-key.me-2
+            | Đổi mật khẩu
+        li
+          a.dropdown-item(href="/views/auth?mode=login")
+            i.fas.fa-sign-out-alt.me-2
+            | Đăng xuất
+
 block scripts
   script(src="/js/trainee/home.js" defer)

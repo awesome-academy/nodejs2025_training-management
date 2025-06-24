@@ -195,26 +195,22 @@ function toggleSubject(subjectId) {
     }
 }
 
-// Select subject
 function selectSubject(subjectId) {
     const courseSubject = currentCourse.courseSubjects.find((s) => s.id === subjectId);
     if (!courseSubject) return;
 
     currentSubject = courseSubject;
 
-    // Update UI
     document.querySelectorAll('.subject-content').forEach((content) => {
         content.classList.remove('active');
     });
     document.getElementById(`subject-${subjectId}`).classList.add('active');
 
-    // Select first task if available
     if (courseSubject.subject.tasksCreated && courseSubject.subject.tasksCreated.length > 0) {
         selectTask(courseSubject.subject.tasksCreated[0].id);
     }
 }
 
-// Select task
 function selectTask(taskId) {
     const task = currentCourse.courseSubjects
         .flatMap((s) => s.userSubjects[0]?.userTasks || [])
@@ -225,7 +221,6 @@ function selectTask(taskId) {
     currentTask = task.task;
     currentUserTask = task;
 
-    // Update UI - highlight active task
     document.querySelectorAll('.task-item').forEach((item) => {
         item.classList.remove('active');
     });
@@ -235,10 +230,8 @@ function selectTask(taskId) {
         activeTaskElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    // Update task content
     document.getElementById('taskTitle').textContent = task.task.contentFileLink ? task.task.title : 'Video bài học';
 
-    // Update video
     const videoContainer = document.getElementById('videoContainer');
     if (task.task.contentFileLink) {
         const videoId = extractYoutubeId(task.task.contentFileLink);
@@ -266,7 +259,6 @@ function selectTask(taskId) {
         `;
     }
 
-    // Update navigation buttons
     updateNavigationButtons();
 }
 
@@ -335,7 +327,6 @@ async function toggleTaskCompletion(event, userTaskId) {
             }
         }
 
-        // Cập nhật UI của task
         const taskElement = document.querySelector(`.task-item[onclick*="${userTask.task?.id}"]`);
         if (taskElement) {
             const checkbox = taskElement.querySelector('.task-checkbox');
@@ -358,22 +349,6 @@ async function toggleTaskCompletion(event, userTaskId) {
     }
 }
 
-// Update task UI
-function updateTaskUI(userTaskId) {
-    const taskElement = document.querySelector(`.task-item[onclick*="${currentTask?.id}"]`);
-    const checkbox = taskElement.querySelector('.task-checkbox');
-    const userTask = currentCourse.courseSubjects
-        .flatMap((s) => s.userSubjects[0]?.userTasks || [])
-        .find((t) => t.id === userTaskId);
-
-    if (userTask.status === 'FINISH') {
-        checkbox.classList.add('completed');
-    } else {
-        checkbox.classList.remove('completed');
-    }
-}
-
-// Update navigation buttons
 function updateNavigationButtons() {
     const allTasks = currentCourse.courseSubjects.flatMap((s) => s.userSubjects[0]?.userTasks || []);
     const currentIndex = allTasks.findIndex((t) => t.task.id === currentTask?.id);
@@ -382,12 +357,10 @@ function updateNavigationButtons() {
     const nextButton = document.getElementById('nextButton');
     const completeButton = document.getElementById('completeButton');
 
-    // Cập nhật trạng thái nút
     prevButton.disabled = currentIndex <= 0;
     nextButton.disabled = currentIndex >= allTasks.length - 1;
     completeButton.disabled = !currentTask || currentUserTask?.status === 'FINISH';
 
-    // Thêm sự kiện click cho nút điều hướng
     prevButton.onclick = () => {
         if (currentIndex > 0) {
             selectTask(allTasks[currentIndex - 1].task.id);
@@ -471,7 +444,6 @@ document.querySelectorAll('.course-tab').forEach((tab) => {
     });
 });
 
-// Fetch and render members
 async function fetchAndRenderMembers() {
     try {
         const courseId = window.location.pathname.split('/').pop();

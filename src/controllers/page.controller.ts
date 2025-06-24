@@ -32,6 +32,12 @@ export class PageController {
         return res.render('trainee/my-courses');
     }
 
+    @Get('auth/forgot')
+    @NoGlobalInterceptor()
+    forgotPasswdPage(@Res() res: Response) {
+        return res.render('supervisor/forgot-password');
+    }
+
     @Get('supervisor/auth')
     @NoGlobalInterceptor()
     getSupervisorAuthPage(@Query('mode') mode: string, @Res() res: Response) {
@@ -87,4 +93,9 @@ export class PageController {
             layout: 'layout',
         });
     }
+
+    @Get('supervisor/trainee')
+    @Render('supervisor/trainee')
+    @NoGlobalInterceptor()
+    async getSupervisorTraineePage() {}
 }
