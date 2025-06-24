@@ -12,7 +12,7 @@ export class FindMemberOfCourseDto extends PaginationDto {
     courseId: string;
 
     @ApiProperty({
-        required: true,
+        required: false,
     })
     @IsOptional()
     @IsEnum(EUserCourseStatus)

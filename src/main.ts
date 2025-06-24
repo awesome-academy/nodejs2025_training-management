@@ -14,7 +14,7 @@ async function bootstrap() {
     const configService = app.get(ConfigService);
     const sessionSecret = configService.get<string>('SESSION_SECRET');
 
-    app.useStaticAssets(join(__dirname, '..', '..', 'public'));
+    app.useStaticAssets(join(__dirname, '..', 'public'));
 
     app.use(
         session({
@@ -40,7 +40,7 @@ async function bootstrap() {
         }),
     );
 
-    const viewsPath = join(__dirname, '..', '..', 'src', 'views');
+    const viewsPath = join(__dirname, '..', 'src', 'views');
     app.setViewEngine('pug');
     app.setBaseViewsDir(viewsPath);
 

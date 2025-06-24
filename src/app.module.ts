@@ -4,7 +4,6 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DatabaseModule } from '@modules/databases/databases.module';
 import { UserModule } from '@modules/users/user.module';
-// import { AuthModule } from '@modules/auth/auth.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { BullModule } from '@nestjs/bullmq';
 import { HttpErrorFilter } from './interceptors/httpError.filter';
@@ -30,7 +29,7 @@ import * as path from 'path';
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
-            envFilePath: path.resolve(process.cwd(), `.env.test`),
+            envFilePath: path.resolve(process.cwd(), `.env`),
         }),
         BullModule.forRoot({
             connection: {

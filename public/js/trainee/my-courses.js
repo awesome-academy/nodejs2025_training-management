@@ -52,7 +52,6 @@ async function fetchCourses() {
     }
 }
 
-// Show error message
 function showError(message) {
     const coursesGrid = document.getElementById('coursesGrid');
     coursesGrid.innerHTML = `
@@ -67,7 +66,6 @@ function showError(message) {
       `;
 }
 
-// Render courses
 function renderCourses(courses) {
     const coursesGrid = document.getElementById('coursesGrid');
 
@@ -164,7 +162,6 @@ function renderCourses(courses) {
 
     coursesGrid.innerHTML = coursesHTML;
 
-    // Add animation to cards
     const cards = document.querySelectorAll('.course-card');
     cards.forEach((card, index) => {
         card.style.opacity = '0';
@@ -241,7 +238,6 @@ function renderPagination() {
     paginationContainer.appendChild(nextButton);
 }
 
-// Search handling
 function handleSearch(event) {
     event.preventDefault();
     const searchInput = document.getElementById('searchInput');
@@ -257,14 +253,12 @@ document.getElementById('searchInput').addEventListener('keypress', (e) => {
     }
 });
 
-// Load courses
 async function loadCourses() {
     const courses = await fetchCourses();
     renderCourses(courses);
     renderPagination();
 }
 
-// Initialize when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeApp);
 } else {

@@ -1,7 +1,6 @@
 extends layout
 
 block content
-  // Loading overlay
   #loadingOverlay
     .loading-spinner
       .spinner-border.text-primary(role="status")
@@ -60,7 +59,6 @@ block content
                       i.fas.fa-plus.me-2
                       | Thêm môn học
                 .row#subjectsList
-                  // Dữ liệu môn học sẽ được thêm vào đây
 
               #members.tab-pane.fade(role="tabpanel" aria-labelledby="members-tab")
                 .d-flex.justify-content-between.align-items-center.mb-4
@@ -72,11 +70,28 @@ block content
                       button.btn.btn-primary.btn-sm(data-bs-toggle="modal" data-bs-target="#addMemberModal")
                         <i class="fas fa-user-plus me-2"></i>
                         | Thêm thành viên
-                      .input-group
-                        input#memberSearch.form-control(type="text" placeholder="Tìm kiếm thành viên...")
-                        button#searchMember.btn.btn-primary(type="button")
-                          i.fas.fa-search.me-2
-                          | Tìm kiếm
+                      button#exportMembers.btn.btn-success.btn-sm
+                        i.fas.fa-download.me-2
+                        | Xuất Excel
+                .row.mb-4
+                  .col-md-6
+                    .input-group
+                      input#memberSearch.form-control(type="text" placeholder="Tìm kiếm thành viên...")
+                      button#searchMember.btn.btn-primary(type="button")
+                        i.fas.fa-search.me-2
+                        | Tìm kiếm
+                  .col-md-3
+                    select#memberStatusFilter.form-select
+                      option(value="") Tất cả trạng thái
+                      option(value="IN_PROGRESS") Đang học
+                      option(value="PASS") Đạt
+                      option(value="FAIL") Không đạt
+                      option(value="RESIGN") Đã rời khóa học
+                      option(value="INACTIVE") Không hoạt động
+                  .col-md-3
+                    button#applyFilter.btn.btn-outline-primary.w-100
+                      i.fas.fa-filter.me-2
+                      | Áp dụng bộ lọc
                 .table-responsive
                   table.table.table-hover
                     thead
@@ -87,9 +102,7 @@ block content
                         th Ngày đăng ký
                         th Trạng thái
                     tbody#membersList
-                      // Dữ liệu thành viên sẽ được thêm vào đây
                 #memberPagination.d-flex.justify-content-center.mt-4
-                  // Phân trang sẽ được thêm vào đây
 
               #supervisors.tab-pane.fade(role="tabpanel" aria-labelledby="supervisors-tab")
                 .d-flex.justify-content-between.align-items-center.mb-4
@@ -116,11 +129,8 @@ block content
                         th Trạng thái
                         th Thao tác
                     tbody#supervisorsList
-                      // Dữ liệu người giám sát sẽ được thêm vào đây
                 #supervisorPagination.d-flex.justify-content-center.mt-4
-                  // Phân trang sẽ được thêm vào đây
 
-  // Toast container
   .toast-container.position-fixed.top-0.end-0.p-3
     #notificationToast.toast(role="alert" aria-live="assertive" aria-atomic="true")
       .toast-header
@@ -129,7 +139,7 @@ block content
         button.btn-close(type="button" data-bs-dismiss="toast" aria-label="Close")
       .toast-body#toastMessage
 
-  // Modal chỉnh sửa khóa học
+
   #editCourseModal.modal.fade(tabindex="-1")
     .modal-dialog.modal-lg
       .modal-content
@@ -162,7 +172,6 @@ block content
           button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Hủy
           button.btn.btn-primary(type="submit") Lưu thay đổi
 
-  // Modal thêm môn học
   #addSubjectModal.modal.fade(tabindex="-1")
     .modal-dialog.modal-lg
       .modal-content
@@ -198,7 +207,6 @@ block content
             i.fas.fa-plus.me-2
             | Thêm môn học
 
-  // Modal thêm thành viên
   #addMemberModal.modal.fade(tabindex="-1")
     .modal-dialog
       .modal-content
@@ -222,7 +230,6 @@ block content
           button.btn.btn-secondary(type="button" data-bs-dismiss="modal") Hủy
           button.btn.btn-primary(type="submit", form="addMemberForm") Thêm thành viên
 
-  // Modal thêm người giám sát
   #addSupervisorModal.modal.fade(tabindex="-1")
     .modal-dialog
       .modal-content
@@ -617,6 +624,54 @@ block content
     .badge {
       padding: 0.5rem 1rem;
       font-weight: 500;
+    }
+
+    /* Filter and export styles */
+    .header-actions .btn {
+      transition: all 0.3s ease;
+    }
+    .header-actions .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.15);
+    }
+    .btn-success {
+      background: linear-gradient(45deg, #28a745, #20c997);
+      border: none;
+    }
+    .btn-success:hover {
+      background: linear-gradient(45deg, #218838, #1ea085);
+    }
+    .btn-outline-primary {
+      border: 2px solid #0d6efd;
+      color: #0d6efd;
+      font-weight: 500;
+    }
+    .btn-outline-primary:hover {
+      background: #0d6efd;
+      border-color: #0d6efd;
+      transform: translateY(-2px);
+    }
+    .form-select {
+      border-radius: 8px;
+      border: 2px solid #e9ecef;
+      transition: all 0.3s ease;
+    }
+    .form-select:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .input-group {
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .input-group .form-control {
+      border: none;
+      border-radius: 0;
+    }
+    .input-group .btn {
+      border: none;
+      border-radius: 0;
     }
 
 block scripts

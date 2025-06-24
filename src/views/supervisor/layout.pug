@@ -271,6 +271,10 @@ html(lang="vi")
               a.nav-link(href="/views/supervisor/subjects")
                 i.fas.fa-tasks.me-2
                 | Môn học
+            li.nav-item
+              a.nav-link(href="/views/supervisor/trainee")
+                i.fas.fa-user-graduate.me-2
+                | Thành viên
           ul.navbar-nav
             li.nav-item.dropdown
               a.nav-link.dropdown-toggle(href="#", data-bs-toggle="dropdown")
@@ -278,13 +282,13 @@ html(lang="vi")
                 | Tài khoản
               ul.dropdown-menu.dropdown-menu-end
                 li
-                  a.dropdown-item(href="/views/supervisor/profile")
-                    i.fas.fa-user.me-2
-                    | Hồ sơ
+                  a.dropdown-item(href="#" data-bs-toggle="modal" data-bs-target="#editProfileModal")
+                    i.fas.fa-user-edit.me-2
+                    | Chỉnh sửa hồ sơ
                 li
-                  a.dropdown-item(href="/views/supervisor/settings")
-                    i.fas.fa-cog.me-2
-                    | Cài đặt
+                  a.dropdown-item(href="#" data-bs-toggle="modal" data-bs-target="#changePasswordModal")
+                    i.fas.fa-key.me-2
+                    | Đổi mật khẩu
                 li
                   hr.dropdown-divider
                 li
@@ -299,4 +303,182 @@ html(lang="vi")
     script(src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js")
     script(src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js")
     script(src="/js/supervisor/layout.js" defer)
+
+    // Modal đổi mật khẩu
+    #changePasswordModal.modal.fade(tabindex="-1")
+      .modal-dialog
+        .modal-content
+          .modal-header
+            h5.modal-title.text-primary
+              i.fas.fa-key.me-2
+              | Đổi mật khẩu
+            button.btn-close(type="button" data-bs-dismiss="modal")
+          .modal-body
+            form#changePasswordForm
+              .mb-3
+                label.form-label(for="oldPassword")
+                  i.fas.fa-lock.me-2.text-muted
+                  | Mật khẩu cũ
+                input#oldPassword.form-control.form-control-lg(type="password" name="oldPassword" placeholder="Nhập mật khẩu cũ" required autocomplete="current-password")
+              .mb-3
+                label.form-label(for="newPassword")
+                  i.fas.fa-lock-open.me-2.text-muted
+                  | Mật khẩu mới
+                input#newPassword.form-control.form-control-lg(type="password" name="newPassword" placeholder="Nhập mật khẩu mới" required autocomplete="new-password")
+              .mb-3
+                label.form-label(for="confirmPassword")
+                  i.fas.fa-lock.me-2.text-muted
+                  | Xác nhận mật khẩu mới
+                input#confirmPassword.form-control.form-control-lg(type="password" name="confirmPassword" placeholder="Nhập lại mật khẩu mới" required autocomplete="new-password")
+              .mb-3.text-danger#changePasswordError
+              button.btn.btn-primary.btn-lg.w-100.mt-2(type="submit")
+                i.fas.fa-sync-alt.me-2
+                | Đổi mật khẩu
+    style.
+      #changePasswordModal .modal-content {
+        border-radius: 1.5rem;
+      }
+      #changePasswordModal .form-label {
+        font-weight: 500;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+      }
+      #changePasswordModal .form-control-lg {
+        border-radius: 1rem;
+        font-size: 1.1rem;
+        padding: 1rem 1.25rem;
+        border: 1.5px solid #e9ecef;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      #changePasswordModal .form-control-lg:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.15rem rgba(13,110,253,.15);
+        background: #f8f9fa;
+      }
+      #changePasswordModal .btn-lg {
+        padding: 0.9rem 1.5rem;
+        font-size: 1.1rem;
+        border-radius: 1rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+      #changePasswordError {
+        min-height: 24px;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+      }
+
+    // Toast notification container
+    .notification-container.position-fixed.top-0.end-0.p-3(style="z-index: 9999;")
+      #changePasswordToast.toast(role="alert" aria-live="assertive" aria-atomic="true")
+        .toast-header
+          i.fas.fa-info-circle.me-2
+          strong.me-auto Thông báo
+          button.btn-close(type="button" data-bs-dismiss="toast" aria-label="Close")
+        .toast-body#changePasswordToastBody
+
+    style.
+      #changePasswordModal .modal-content {
+        border-radius: 1.5rem;
+      }
+      .notification-container {
+        z-index: 9999;
+      }
+      .toast {
+        background: white;
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        border-radius: 15px;
+        min-width: 320px;
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+      }
+      .toast.show {
+        transform: translateX(0);
+      }
+      .toast-header {
+        border-bottom: 2px solid #f8f9fa;
+        border-radius: 15px 15px 0 0;
+        padding: 1rem;
+      }
+      .toast-body {
+        padding: 1rem;
+        font-size: 0.95rem;
+      }
+      .toast.success .toast-header {
+        background-color: #198754;
+        color: white;
+      }
+      .toast.error .toast-header {
+        background-color: #dc3545;
+        color: white;
+      }
+      .toast.success .toast-body {
+        border-left: 4px solid #198754;
+      }
+      .toast.error .toast-body {
+        border-left: 4px solid #dc3545;
+      }
+
+    // Modal chỉnh sửa hồ sơ
+    #editProfileModal.modal.fade(tabindex="-1")
+      .modal-dialog
+        .modal-content
+          .modal-header
+            h5.modal-title.text-primary
+              i.fas.fa-user-edit.me-2
+              | Chỉnh sửa hồ sơ
+            button.btn-close(type="button" data-bs-dismiss="modal")
+          .modal-body
+            form#editProfileForm
+              .mb-3
+                label.form-label(for="profileName")
+                  i.fas.fa-user.me-2.text-muted
+                  | Họ tên
+                input#profileName.form-control(type="text" name="name" placeholder="Nhập họ tên" required)
+              .mb-3
+                label.form-label(for="profileEmail")
+                  i.fas.fa-envelope.me-2.text-muted
+                  | Email
+                input#profileEmail.form-control(type="email" name="email" placeholder="Nhập email" required)
+              .mb-3.text-danger#editProfileError
+              button.btn.btn-primary.btn-lg.w-100.mt-2(type="submit")
+                i.fas.fa-save.me-2
+                | Lưu thay đổi
+    style.
+      #editProfileModal .modal-content {
+        border-radius: 1.5rem;
+      }
+      #editProfileModal .form-label {
+        font-weight: 500;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+      }
+      #editProfileModal .form-control {
+        border-radius: 1rem;
+        font-size: 1.05rem;
+        padding: 0.9rem 1.2rem;
+        border: 1.5px solid #e9ecef;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      #editProfileModal .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.15rem rgba(13,110,253,.15);
+        background: #f8f9fa;
+      }
+      #editProfileModal .btn-lg {
+        padding: 0.9rem 1.5rem;
+        font-size: 1.1rem;
+        border-radius: 1rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+      #editProfileError {
+        min-height: 24px;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+      }
+
     block scripts

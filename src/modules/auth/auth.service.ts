@@ -214,7 +214,11 @@ export class AuthService {
     }
 
     async updatePassword({ newPassword, oldPassword }: UpdatePasswordDto, user: User): Promise<AppResponse<User>> {
-        if (user.password === oldPassword) {
+        const checkPasswdIsCorrect = await this.verifyPassword(oldPassword, user.password);
+        if (!checkPasswdIsCorrect) {
+            throw new BadRequestException('auths.old password is not correct');
+        }
+        if (oldPassword === newPassword) {
             throw new BadRequestException('auths.old and new passwords must be different');
         }
         const hashedNewPassword = await argon2.hash(newPassword);
