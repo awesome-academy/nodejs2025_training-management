@@ -189,7 +189,14 @@ describe('SubjectService (Unit Test)', () => {
             const supervisor = await createTestUser(ERolesUser.SUPERVISOR);
             const subject = await createSubject(supervisor);
             const updateDto = { name: randomName(), description: 'Updated Description' };
-            const taskDto = { tasks: [mockTasks[0]] };
+            const taskDto = {
+                tasks: [
+                    {
+                        contentFileLink: 'https://www.youtube.com/watch?v=2rduCeh-04M',
+                        title: randomName(),
+                    },
+                ],
+            };
 
             await service.updateSubjectInfo(subject.id, updateDto);
             const updatedSubject = await service.findOne(subject.id);

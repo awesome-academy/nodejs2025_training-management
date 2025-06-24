@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { DatabaseModule } from '@modules/databases/databases.module';
 import { SharedModule } from '@modules/shared/shared.module';
 import { UserSubjectService } from './user_subject.service';
@@ -8,7 +8,7 @@ import { UserSubjectController } from './user_subject.controller';
 import { UserCourseModule } from '@modules/user_course/user_course.module';
 
 @Module({
-    imports: [DatabaseModule, SharedModule, UserTaskModule, UserCourseModule],
+    imports: [DatabaseModule, SharedModule, forwardRef(() => UserTaskModule), UserCourseModule],
     providers: [...userSubjectProviders, UserSubjectService],
     controllers: [UserSubjectController],
     exports: [UserSubjectService],

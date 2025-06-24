@@ -536,7 +536,7 @@ export class CourseService extends BaseServiceAbstract<Course> {
         if (!userCourse) {
             throw new NotFoundException('courses.Trainee Not Found');
         }
-        const status: boolean = await await this.userCourseService.remove(userCourseId);
+        const status = await this.userCourseService.remove(userCourseId);
         await this.queueService.addVerifyJob({
             queueName: EQueueName.Notification,
             notificationType: ENotificationType.TraineeAddOrRemove,
